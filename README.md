@@ -1,4 +1,4 @@
-# WiseAI: An Easily-going Agent Framework
+# WiseAI: An Easy-going Agent Framework
 
 ## Development
 Now it doesn't automatically create a database.
