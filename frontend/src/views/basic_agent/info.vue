@@ -101,7 +101,7 @@
     <!-- Initial a Agent base this. -->
     <el-divider></el-divider>
     <el-row style="text-align:center;">
-      <router-link :to="{name:'initial', params: { basic_agent_id: agent.id }}">
+      <router-link :to="{name:'initial_agent', params: { basic_agent_id: agent.id }}">
         <el-button 
         class="initial_button"
         type="primary" 
