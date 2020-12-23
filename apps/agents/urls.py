@@ -36,7 +36,17 @@ urlpatterns = [
         name="behaviour_info",
     ),
     # ----------------------InitialAgent---------------
-
+    url(
+        r"user_agent_list",
+        views.UserAgentListView.as_view(),
+        name="get_user_agent_list",
+    ),
+    url(
+        r"user_agent_info/(?P<agent_id>[0-9]+)",
+        views.UserAgentInfoView.as_view(),
+        name="get_user_agent_info",
+    ),
+    #------------------Category-----------------
     url(
         r"categories",
         CategoryView.as_view(),

@@ -126,7 +126,7 @@ REST_FRAMEWORK = {
     "PAGE_SIZE": 100,
     "TEAM_PAGE_SIZE": 10,
     "DEFAULT_PERMISSION_CLASSES": [
-        "rest_framework.permissions.IsAuthenticatedOrReadOnly"
+        "rest_framework.permissions.IsAuthenticated"
     ],
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_jwt.authentication.JSONWebTokenAuthentication',
@@ -165,7 +165,7 @@ JWT_AUTH = {
     'JWT_VERIFY': True,
     'JWT_VERIFY_EXPIRATION': True,
     # 'JWT_LEEWAY': 0,
-    'JWT_EXPIRATION_DELTA': datetime.timedelta(seconds=300),
+    'JWT_EXPIRATION_DELTA': datetime.timedelta(days=3),
     # 'JWT_AUDIENCE': None,
     # 'JWT_ISSUER': None,
 

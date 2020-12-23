@@ -15,7 +15,7 @@
               text-color="#fff"
               active-text-color="#ffd04b">
             <el-menu-item index="1">
-              <router-link to="/index/agent/basic_agent_list">
+              <router-link to="/index/basic_agent/list">
                 <el-button type="primary" class="wise_button"
                 >Agent
                 </el-button>
@@ -30,7 +30,7 @@
                 <el-dropdown-menu slot="dropdown">
                   <!-- <el-dropdown-item @click.native="admin_manage"
                     >Manage</el-dropdown-item> -->
-                  <router-link to="/my_agents">
+                  <router-link to="/index/user_agent/list">
                     <el-dropdown-item>My Agents</el-dropdown-item>
                   </router-link>
                   <el-dropdown-item @click.native="user_logout"
@@ -94,6 +94,7 @@
 
     </div>
   </div>
+
 </template>
 
 <script>
@@ -143,7 +144,7 @@ export default {
       this.$router.push("/manage");
     },
     agent_index() {
-      this.$router.push("/agent");
+      this.$router.push("/basic_agent");
     },
     submitForm() {
       this.loginVisible = true; // 默认页面不显示为false,点击按钮将这个属性变成true

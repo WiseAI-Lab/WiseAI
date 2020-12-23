@@ -16,7 +16,9 @@
     "node-sass": "^5.0.0",
     "normalize.css": "^8.0.1",
     "sass-loader": "^10.1.0",
+    "svg-icon": "^0.8.2",
     "vue": "^2.6.11",
+    "vue-markdown": "^2.2.4",
     "vue-router": "^3.4.9",
     "vuex": "^3.6.0",
     "webpack": "^4.5.0"

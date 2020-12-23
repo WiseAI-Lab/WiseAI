@@ -9,7 +9,7 @@ from agents.models import (
     BehaviourConfigsModel,
     CategoryModel,
     BasicAgentsModel,
-    BehavioursModel
+    BehavioursModel, InitialAgentsModel
 )
 from agents.serilizers import (
     CategorySerializer,
@@ -18,9 +18,9 @@ from agents.serilizers import (
     BasicAgentsListSerializer,
     BasicAgentsInfoSerializer,
     BehaviourInfoSerializer,
-    BehaviourListSerializer
+    BehaviourListSerializer, InitialAgentListSerializer, InitialAgentInfoSerializer
 )
-from agents.utils import get_basic_agent_model, get_behaviour_model
+from agents.utils import get_basic_agent_model, get_behaviour_model, get_user_agent_model
 from base.utils import paginated_queryset
 
 
@@ -47,6 +47,27 @@ class BasicAgentInfoView(APIView):
         agent = get_basic_agent_model(agent_id)
 
         serializer = BasicAgentsInfoSerializer(agent)
+        response_data = serializer.data
+        return Response(response_data, status=status.HTTP_200_OK)
+
+
+# ---------------------------Initial Agent--------------------
+class UserAgentListView(APIView):
+    def get(self, request):
+        agents = InitialAgentsModel.objects.filter(belong_to=request.user)
+        paginator, result_page = paginated_queryset(agents, request)
+        serializer = InitialAgentListSerializer(
+            result_page, many=True
+        )
+        response_data = serializer.data
+        return paginator.get_paginated_response(response_data)
+
+
+class UserAgentInfoView(APIView):
+    def get(self, request, agent_id):
+        agent = get_user_agent_model(agent_id)
+
+        serializer = InitialAgentInfoSerializer(agent)
         response_data = serializer.data
         return Response(response_data, status=status.HTTP_200_OK)
 
@@ -78,7 +99,7 @@ class BehaviourInfoView(APIView):
         return Response(response_data, status=status.HTTP_200_OK)
 
 
-# The fourth page is to create a initial agent.
+# The fourth page is to create a initial basic_agent.
 
 
 class AgentConfigsView(APIView):

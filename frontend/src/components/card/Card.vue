@@ -1,116 +1,78 @@
 <template>
-  <div class="card-wrapper">
-    <div :id="`card-${item.id}`" class="card" @click="handleView($event, item.id)"
-      :class="{'open': item.open}"
-      :style="styleObject">
-      <div class="card-top">
-        <div class="img" 
-        :style="{'background-image': 'url('+ require('../../assets'+ item.img)+')'}"></div>
-        <div class="title">{{ item.title }}</div>
-      </div>
-      <div class="description">{{ item.description }}</div>
-    </div>
+  <div>
+    <el-card :id="`card-${item.id}`" class="node_card"  shadow="hover" >
+        <el-badge :value="'ID:' + item.id" class="item" type="success">
+          <el-row type="flex" justify="center">
+            <el-col :xs="20" :sm="10" :md="4" :lg="3" :xl="1" style="width: 80%; height: 80%">
+              <el-image
+                style="width: 100%; height: 100%; text-align:center;"
+                :src="item.avatar"
+                fit="fill"
+              />
+            </el-col>
+            <el-col :offset="2">
+              <el-row>
+                <span style="font-size: large; text-align:center;">
+                  <el-button
+                  class="name_button"
+                  size="small" type="primary" plain><strong>{{ item.name }}</strong></el-button>
+                </span>
+              </el-row>
+              <el-divider></el-divider>
+                  <el-tag v-if="item.is_office" size="mini" effect="dark" closable>office</el-tag>
+                  <el-tag v-if="!item.is_office" size="mini" effect="dark" closable>user</el-tag>
+
+                  <el-tag v-if="!item.in_docker" size="mini" effect="dark" closable>docker</el-tag>
+
+                  <el-tag v-if="item.status" size="mini" effect="dark" closable>Active</el-tag>
+                  <el-tag v-if="!item.status" size="mini" type="info" effect="dark" closable>Rest</el-tag>
+            </el-col>
+          </el-row>
+
+        </el-badge>
+    </el-card>
   </div>
 </template>
 
 <script>
 export default {
-  props: ["item","id"],
-  data: () => {
-    return {
-      styleObject: {
-        transform: 'translate(0px,0px)'
-      }
-    };
-  },
-  methods: {
-    handleView(el, cardId) {
-      this.item.open = !this.item.open;
-      let viewportOffset = el.target.getBoundingClientRect();
-
-      if(this.item.open) {
-        document.body.style.top = '-' + window.scrollY + 'px';
-        document.body.style.position = 'fixed';
-
-        this.styleObject.transform = 
-          'translate('+ viewportOffset.left * -1 +'px, '+ viewportOffset.top * -1 +'px)';
-
-        if(cardId !== this.id)
-          this.$router.push({ name: 'my_agent_card', params: {id: cardId}});
-      }
-      else {
-        this.styleObject = {
-          transform: 'translate(0px,0px)'
-        };
-
-        let scrollY = document.body.style.top;
-        document.body.style.position = '';
-        document.body.style.top = '';
-        window.scrollTo(0, parseInt(scrollY) * -1);
-
-        this.$router.push({ name: 'cardlist'});
-      }
-    }
-  }
+  name: 'NodeCard',
+  props: ["item"],
 };
 </script>
 
 <style lang="scss" scoped>
-.card-wrapper {
-  margin-bottom: 20px;
-  width: 100%;
-  height: 450px;
+.node_title {
+  background: white;
+  border-radius: 30px 10px 10px 10px;
+  box-shadow: 2px 2px 7px 1px rgb(189, 189, 189);
+  margin-top: 2em;
+  text-align: center;
+  display: inline-block;
+  transition: .3s all;
+}
 
-  .card {
-    position: relative;
-    border-radius: 20px;
-    width: 100%;
-    height: 450px;
-    border: 1px solid #fff;
-    background-color: #efefef;
-    overflow: hidden;
-    cursor: pointer;
-    z-index: 1;
-    transition: all .5s cubic-bezier(.6,0,.45,1.3);
+.node_card {
+  position: relative;
+  left: 0;
+  top: 0;
+  background: white;
+  border-radius: 10px;
+  box-shadow: 2px 2px 7px 1px rgb(84, 87, 87);
 
-    &.open {
-      z-index: 100;
-      border-radius: 0;
-      border: 0;
-      width: 100vw;
-      height: 100vh;
-    }
-
-    .card-top, .title, .description, .img {
-      pointer-events: none;
-    }
-
-    .card-top {
-      position: relative;
-      background-color: #fff;
-
-      .img {
-        width: 100%;
-        height: 450px;
-        background-position: center;
-        background-size: cover;
-      }
-
-      .title {
-        position: absolute;
-        bottom: 0;
-        padding: 5px 20px;
-        width: calc(100% - 40px);
-        height: 40px;
-        color: #fff;
-        background-color: #222;
-        font-size: 1.6rem;
-      }
-    }
-
-    .description {
-      padding: 20px;
-    }
-  }
+  margin: 1em;
+  transition-duration: .1s;
+  transition-property: all;
+  justify-content: space-between;
+  padding: 0 1em;
+  cursor: pointer;
+}
+  .name_button {
+  border-radius: 100px;
+  background-color: #3b3594;
+  color: #ffffff;
+  font-size: 1.5em;
+  border-width: 0.3em;
+  border-color:#3b3594;
 }
 </style>

@@ -1,16 +1,13 @@
 <template>
   <div>
     <el-container>
-      <el-divider></el-divider>
+      <br>
       <el-header style="background-color: transparent;text-align: center;">
-
-        <!-- <router-link to="/index/agent/my_agent"> -->
-        <router-link to="/my_agents">
+        <router-link to="/index/user_agent/list">
           <el-button v-if="token" type="success">My Agents</el-button>
         </router-link>
-        <!-- </router-link> -->
         <el-divider v-if="token" direction="vertical"></el-divider>
-        <router-link to="/index/agent/basic_agent_list">
+        <router-link to="/index/basic_agent/list">
             <el-button type="primary" size="small">Agents</el-button>
         </router-link>
         <el-divider direction="vertical"></el-divider>
