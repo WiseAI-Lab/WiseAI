@@ -10,7 +10,7 @@ class CategoryModel(TimeStampedModel):
 
     name = models.CharField(max_length=100, db_index=True)
     parent = models.IntegerField(default=0)
-    type = models.SmallIntegerField(null=False, default=1)  # 1 agent, 2 behaviour
+    type = models.SmallIntegerField(null=False, default=1)  # 1 basic_agent, 2 behaviour
 
     class Meta:
         app_label = "agents"
@@ -22,7 +22,7 @@ class CategoryModel(TimeStampedModel):
 
 class VersionModel(TimeStampedModel):
     """
-        Description what the agent version is.
+        Description what the basic_agent version is.
     """
 
     def __init__(self, *args, **kwargs):
@@ -48,7 +48,7 @@ class AgentConfigsModel(TimeStampedModel):
     name = models.CharField(max_length=100)
     # extra property
     extend = models.TextField(default="{}")
-    # if basic agent or user's agent
+    # if basic basic_agent or user's basic_agent
     is_base = models.BooleanField(default=False, db_index=True)
 
     class Meta:
@@ -123,17 +123,17 @@ class BasicAgentsModel(TimeStampedModel):
 
     # name
     name = models.CharField(max_length=100)
-    # Prerequisite set of behaviour for this agent.
+    # Prerequisite set of behaviour for this basic_agent.
     prerequisite_behaviour_categories = ArrayField(
         models.IntegerField(), default=list, blank=True
     )
-    # Default behaviours for this agent.
+    # Default behaviours for this basic_agent.
     default_behaviours = ArrayField(
         models.IntegerField(), default=list, blank=True
     )
-    # Parent agent id.
+    # Parent basic_agent id.
     parent_agent = models.IntegerField(null=True, blank=True, default=None, db_index=True)
-    # agent category
+    # basic_agent category
     agent_category = models.ForeignKey(
         "CategoryModel",
         related_name="agent_basic_category",
@@ -186,7 +186,7 @@ class InitialAgentsModel(TimeStampedModel):
         models.IntegerField(), default=list, blank=True
     )  # Current Behaviours' id
     basic_agent = models.IntegerField(null=False)
-    # Category for initial agent, and default is inherit from basic agent.
+    # Category for initial basic_agent, and default is inherit from basic basic_agent.
     agent_category = models.ForeignKey(
         "CategoryModel",
         related_name="agent_initial_category",
@@ -201,9 +201,9 @@ class InitialAgentsModel(TimeStampedModel):
         related_name="user_initial_agent",
         on_delete=models.CASCADE
     )
-    # configs for current agent
+    # configs for current basic_agent
     agent_configs = models.OneToOneField(AgentConfigsModel, null=True, on_delete=models.RESTRICT)
-    # configs for current agent's behaviours
+    # configs for current basic_agent's behaviours
     behaviour_configs = models.OneToOneField(BehaviourConfigsModel, null=True, on_delete=models.RESTRICT)
 
     class Meta:

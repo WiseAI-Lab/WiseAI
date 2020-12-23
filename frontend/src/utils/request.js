@@ -1,7 +1,7 @@
 import axios from 'axios'
 import { MessageBox, Message } from 'element-ui'
 import store from '@/store'
-// import { getToken } from '@/utils/auth'
+import { getToken } from '@/utils/auth'
 
 // create an axios instance
 const service = axios.create({
@@ -20,7 +20,7 @@ service.interceptors.request.use(
       // ['X-Token'] is a custom headers key
       // please modify it according to the actual situation
       // config.headers['X-Token'] = getToken()
-      // config.headers['Authorization'] = 'Bearer ' + getToken()
+      config.headers['Authorization'] = 'Bearer ' + getToken()
     }
     return config
   },
@@ -54,7 +54,7 @@ service.interceptors.response.use(
         duration: 3 * 1000
       })
       // 401: Illegal token; 422: Token expired;
-      if (status === 422) {
+      if (status === 422 || status === 401) {
         // to re-login
         MessageBox.confirm('You have been logged out, you can cancel to stay on this page, or log in again', 'Confirm logout', {
           confirmButtonText: 'Re-Login',
@@ -66,6 +66,7 @@ service.interceptors.response.use(
           })
         })
       }
+
       return Promise.reject(new Error(message || 'Error'))
     } else {
       return response

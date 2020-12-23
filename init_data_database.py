@@ -19,7 +19,7 @@ user_data = {
 }
 category_data = [
     {
-        "name": "agent",
+        "name": "basic_agent",
         "parent": 0,
         "type": 1
     }, {
@@ -103,7 +103,7 @@ agent_data = [
         "parent_agent": 0,
         "agent_category": 1,
         "url": "",
-        "description": "It's the base agent for all agent.",
+        "description": "It's the base basic_agent for all basic_agent.",
         "is_office": True,
         "in_docker": False,
         "author": 1,
@@ -115,7 +115,7 @@ agent_data = [
         "parent_agent": 1,
         "agent_category": 1,
         "url": "",
-        "description": "It's the offline agent.",
+        "description": "It's the offline basic_agent.",
         "is_office": True,
         "in_docker": False,
         "author": 1,
@@ -128,13 +128,27 @@ agent_data = [
         "parent_agent": 1,
         "agent_category": 1,
         "url": "",
-        "description": "It's the online agent.",
+        "description": "It's the online basic_agent.",
         "is_office": True,
         "in_docker": False,
         "author": 1,
         "configs": 1
     },
 
+]
+
+initial_agent = [
+    {
+        "name": "TestInitialAgent",
+        "behaviours": [2, 3],
+        "basic_agent": 3,
+        "agent_category": 1,
+        "description": "It's the online basic_agent.",
+        "belong_to": 1,
+        "credit": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9",
+        "agent_configs": 1,
+        "behaviour_configs": 1,
+    },
 ]
 
 
@@ -197,16 +211,29 @@ def create_user(data):
         print(user.errors)
 
 
+def generate_initial_agent(data):
+    from agents.serilizers import CreateInitialAgentSerializer
+
+    agents = CreateInitialAgentSerializer(data=data)
+    if agents.is_valid():
+        agents.save()
+        print("save {} into Table: InitialAgent".format(data))
+    else:
+        print(agents.errors)
+
+
 def main():
-    create_user(user_data)
-    generate_agent_config(empty_configs_data)
-    generate_behaviour_config(empty_configs_data)
-    for d in category_data:
-        generate_category(d)
-    for d in behaviour_data:
-        generate_behaviour(d)
-    for d in agent_data:
-        generate_agent(d)
+    # create_user(user_data)
+    # generate_agent_config(empty_configs_data)
+    # generate_behaviour_config(empty_configs_data)
+    # for d in category_data:
+    #     generate_category(d)
+    # for d in behaviour_data:
+    #     generate_behaviour(d)
+    # for d in agent_data:
+    #     generate_agent(d)
+    for d in initial_agent:
+        generate_initial_agent(d)
 
 
 if __name__ == '__main__':

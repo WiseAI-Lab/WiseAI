@@ -97,9 +97,9 @@
     },
     created() {
     var basic_agent_id = this.$route.params.basic_agent_id;
-    // this.$store.dispatch("agent/get_basic_agent_info", { basic_agent_id: basic_agent_id }).then((data) => {
+    // this.$store.dispatch("basic_agent/get_basic_agent_info", { basic_agent_id: basic_agent_id }).then((data) => {
     //     this.richMediaData = JSON.parse(JSON.stringify(data["parent_agent"]));
-    //     this.agent = data;
+    //     this.basic_agent = data;
     //   })
     //   .catch(() => {
     //     this.loading = false;

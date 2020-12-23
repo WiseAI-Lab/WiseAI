@@ -192,33 +192,6 @@ aside {
 
 // -----------------------Wise Agent--------------------------
 
-.node_title {
-  background: white;
-  border-radius: 30px 10px 10px 10px;
-  box-shadow: 2px 2px 7px 1px rgb(189, 189, 189);
-  margin-top: 2em;
-  text-align: center;
-  display: inline-block;
-  transition: .3s all;
-}
-
-.node_card {
-  position: relative;
-  left: 0;
-  top: 0;
-  background: white;
-  //height: 120px;
-  border-radius: 10px;
-  box-shadow: 2px 2px 7px 1px rgb(84, 87, 87);
-
-  margin: 1em;
-  transition-duration: .1s;
-  transition-property: all;
-  justify-content: space-between;
-  padding: 0 1em;
-  cursor: pointer;
-}
-
 .node_col .is-hover-shadow:hover {
   transition-duration: .1s;
   transition-property: all;
@@ -257,7 +230,7 @@ aside {
 }
 
 
-.main_text {
+.main_text{
   color: white;
   font-size: 50px;
   border-radius: 1px;
