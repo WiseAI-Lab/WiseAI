@@ -15,18 +15,22 @@ export const constantRoutes = [
     },
     {
         path: '/index',
-        component: () => import('@/views/index/index'),
-        redirect: 'wise',
+        component: () => import('@/views/index'),
+    },
+    {
+        path: '/agent',
+        component: () => import('@/views/agent'),
+        redirect: '/agent/index',
         children: [
             {
-                path: '/wise',
-                name: 'wise',
-                component: () => import('@/views/index/wise'),
+                path: 'index',
+                component: () => import('@/views/agent_index'),
             },
             {
-                path: 'basic_agent',
+                path: 'basic',
                 name: 'basic_agent',
                 component: () => import('@/views/basic_agent/index'),
+                redirect: 'basic/list',
                 children: [
                     {
                         path: 'list',
@@ -47,9 +51,10 @@ export const constantRoutes = [
                 ]
             },
             {
-                path: 'user_agent',
+                path: 'user',
                 name: 'user_agent',
                 component: () => import('@/views/user_agent/index'),
+                redirect: 'user/list',
                 children: [
                     {
                         path: 'list',

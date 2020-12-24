@@ -1,17 +1,9 @@
 <template>
   <div>
-    <el-container>
+    <full-page-loader v-if="loading" />
+      <el-container>
       <br>
       <el-header style="background-color: transparent;text-align: center;">
-        <router-link to="/index/user_agent/list">
-          <el-button v-if="token" type="success">My Agents</el-button>
-        </router-link>
-        <el-divider v-if="token" direction="vertical"></el-divider>
-        <router-link to="/index/basic_agent/list">
-            <el-button type="primary" size="small">Agents</el-button>
-        </router-link>
-        <el-divider direction="vertical"></el-divider>
-        <el-button type="primary" size="small">Behaviours</el-button>
       </el-header>
       <el-main id="main_agent_list">
         <el-container style="height: 100%; border-radius: 10px;background-color: rgb(255, 255, 255)">
@@ -26,25 +18,25 @@
 </template>
 
 <script>
-import { getToken } from "@/utils/auth";
+import FullPageLoader from '@/components/FullPageLoader';
+
 export default {
-  name: "AgentIndex",
-  data: () => {
+  name: 'browse',
+  components: { FullPageLoader },
+  data() {
     return {
-        token: "",
-    }
+      loading: true,
+    };
+  },
+  methods: {
+    fetchTopCharts() {
+      setTimeout( function () {
+              this.loading = false
+      }, 2)
+    },
   },
   created() {
-    this.token = getToken();
+    this.fetchTopCharts();
   },
 };
 </script>
-
-<style lang="scss" scoped>
-.el-header {
-  text-align: right;
-  padding: 0;
-  background-color: transparent;
-}
-
-</style>

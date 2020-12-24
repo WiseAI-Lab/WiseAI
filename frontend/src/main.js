@@ -5,6 +5,7 @@ import Cookies from 'js-cookie'
 import 'normalize.css/normalize.css' // a modern alternative to CSS resets
 import './styles/element-variables.scss'
 import '@/styles/index.scss' // global css
+import '@/assets/main.scss';
 
 import store from './store'
 import router from './router'

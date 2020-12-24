@@ -1,14 +1,6 @@
 <template>
   <div class="app-container" style="text-align:center;">
-    <el-divider content-position="center">Agents</el-divider>
     <el-container>
-      <el-header style="text-align: center; font-size: 12px">
-        <el-button type="primary" size="mini">Upload an Agent</el-button>
-        <el-divider direction="vertical"></el-divider>
-        <router-link to="initial">
-          <el-button type="primary" size="mini">Launch Your Agent</el-button>
-        </router-link>
-      </el-header>
       <el-main>
         <el-container>
           <el-header>
