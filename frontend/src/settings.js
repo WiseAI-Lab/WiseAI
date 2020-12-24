@@ -1,5 +1,5 @@
 module.exports = {
-  requestUrl: 'http://django:8000',
+  requestUrl: 'http://localhost:8000',
   port: 4000,
   title: 'Wise Agent',
 

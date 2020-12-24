@@ -10,4 +10,4 @@ RUN pip install -r django.txt -i https://mirrors.bfsu.edu.cn/pypi/web/simple
 
 ADD . /code
 
-CMD ["sh", "/code/docker/dev/django/container-start.sh"]
+CMD ["./docker/wait-for-it.sh", "db:5432", "--", "sh", "/code/docker/dev/django/container-start.sh"]
