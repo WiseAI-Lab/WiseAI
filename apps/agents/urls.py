@@ -1,55 +1,39 @@
 from django.conf.urls import url
-
 from agents import views
-from agents.views import CategoryView
 
 urlpatterns = [
+    # -----------------------Agent-------------------
     url(
-        r"agent_configs",
-        views.AgentConfigsView.as_view(),
-        name="get_agent_configs",
-    ), url(
-        r"behaviour_configs",
-        views.BehaviourConfigsView.as_view(),
-        name="get_behaviour_configs",
-    ),
-    # -----------------------BasicAgent-------------------
-    url(
-        r"basic_agent_list",
-        views.BasicAgentsListView.as_view(),
-        name="get_basic_agent_list",
+        r"search",
+        views.SearchList.as_view(),
+        name="search",
     ),
     url(
-        r"basic_agent_info/(?P<agent_id>[0-9]+)",
-        views.BasicAgentInfoView.as_view(),
-        name="get_basic_agent_info",
+        r"agent_repository/(?P<agent_id>[0-9]+)/",
+        views.AgentRepositoryView.as_view(),
+        name="get_agent_repository",
+    ),
+    url(
+        r"agent_repository/(?P<agent_id>[0-9]+)/topics",
+        views.AgentTopicView.as_view(),
+        name="get_agent_topic",
     ),
     # -----------------------Behaviours------------------
     url(
-        r"behaviour_list",
-        views.BehaviourListView.as_view(),
-        name="get_behaviour_list",
+        r"behaviour_repository/(?P<agent_id>[0-9]+)/",
+        views.BehaviourRepositoryView.as_view(),
+        name="get_behaviour_repository",
     ),
     url(
-        r"behaviour_info/(?P<agent_id>[0-9]+)",
-        views.BehaviourInfoView.as_view(),
-        name="behaviour_info",
+        r"behaviour_repository/(?P<agent_id>[0-9]+)/topics",
+        views.BehaviourTopicView.as_view(),
+        name="get_behaviour_topic",
     ),
-    # ----------------------InitialAgent---------------
-    url(
-        r"user_agent_list",
-        views.UserAgentListView.as_view(),
-        name="get_user_agent_list",
-    ),
-    url(
-        r"user_agent_info/(?P<agent_id>[0-9]+)",
-        views.UserAgentInfoView.as_view(),
-        name="get_user_agent_info",
-    ),
-    #------------------Category-----------------
+    # ------------------Category-----------------
     url(
         r"categories",
-        CategoryView.as_view(),
+        views.CategoryView.as_view(),
         name="get_category",
     ),
+    # -----------------Build Agent--------------
 ]

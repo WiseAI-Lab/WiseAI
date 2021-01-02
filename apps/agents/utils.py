@@ -1,10 +1,12 @@
 from agents.models import (
-    BasicAgentsModel,
-    InitialAgentsModel,
-    BehavioursModel
+    AgentRepositoryModel,
+    AgentTopicModel,
+    BehaviourRepositoryModel,
+    BehaviourTopicModel
 )
 from base.utils import get_model_object
 
-get_basic_agent_model = get_model_object(BasicAgentsModel)
-get_user_agent_model = get_model_object(InitialAgentsModel)
-get_behaviour_model = get_model_object(BehavioursModel)
+get_agent_repository_model = get_model_object(AgentRepositoryModel)
+get_agent_topic_model = get_model_object(AgentTopicModel)
+get_behaviour_repository_model = get_model_object(BehaviourRepositoryModel)
+get_behaviour_topic_model = get_model_object(BehaviourTopicModel)

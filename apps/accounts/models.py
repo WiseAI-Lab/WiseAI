@@ -5,38 +5,10 @@ from django.contrib.auth.base_user import BaseUserManager
 from django.contrib.auth.hashers import make_password, check_password
 from django.db import models, transaction
 from django.db.models import AutoField, ForeignKey
-from django.db.models.signals import post_save
-from django.contrib.auth.models import User, AbstractUser
-from django.dispatch import receiver
+from django.contrib.auth.models import AbstractUser
 from django.forms import CharField
 
 from base.models import TimeStampedModel
-
-
-class UserStatus(TimeStampedModel):
-    """
-    Model representing the status of a user being invited by
-    other user to host/participate in a competition
-    .. note::
-        There are four different status:
-            - Unknown.
-            - Denied.
-            - Accepted
-            - Pending.
-    """
-
-    UNKNOWN = "unknown"
-    DENIED = "denied"
-    ACCEPTED = "accepted"
-    PENDING = "pending"
-    name = models.CharField(max_length=30)
-    status = models.CharField(max_length=30, unique=True)
-
-    def __str__(self):
-        return self.name
-
-    class Meta:
-        app_label = "accounts"
 
 
 class UserManager(BaseUserManager):
@@ -74,12 +46,12 @@ class UserProfile(AbstractUser, TimeStampedModel):
     phone = CharField(max_length=64)
     avatar = models.CharField(max_length=100, null=True, blank=True, verbose_name="avatar")
     role = models.CharField(max_length=10, default=1, verbose_name="role")
-    initial_agents = models.ManyToManyField(to="agents.InitialAgentsModel", through="UserAndInitialAgent",
-                                            through_fields=("user_id", "ac_id"))
-    basic_agents = models.ManyToManyField(to="agents.BasicAgentsModel", through="UserAndBasicAgent",
-                                          through_fields=("user_id", "ac_id"))
-    behaviours = models.ManyToManyField(to="agents.BehavioursModel", through="UserAndBehaviour",
-                                        through_fields=("user_id", "b_id"))
+    agents = models.ManyToManyField(to="agents.AgentRepositoryModel", through="AgentRepoModel",
+                                    through_fields=("u_id", "a_id"))
+    behaviours = models.ManyToManyField(to="agents.BehaviourRepositoryModel", through="BehaviourRepoModel",
+                                        through_fields=("u_id", "b_id"))
+    # certificate
+    certificate = models.CharField(max_length=100, default='certificate')
 
     USERNAME_FIELD = 'username'
 
@@ -94,19 +66,19 @@ class UserProfile(AbstractUser, TimeStampedModel):
         return True if check_password(raw_password, self.password) else False
 
 
-class UserAndInitialAgent(models.Model):
+class AgentRepoModel(models.Model):
     ua_id = AutoField(primary_key=True)
-    user_id = ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.RESTRICT)
-    ac_id = ForeignKey('agents.InitialAgentsModel', on_delete=models.RESTRICT)
+    u_id = ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.RESTRICT)
+    a_id = ForeignKey('agents.AgentRepositoryModel', on_delete=models.RESTRICT)
+
+    class Meta:
+        db_table = "owner_agent_repository"
 
 
-class UserAndBasicAgent(models.Model):
-    ua_id = AutoField(primary_key=True)
-    user_id = ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.RESTRICT)
-    ac_id = ForeignKey('agents.BasicAgentsModel', on_delete=models.RESTRICT)
+class BehaviourRepoModel(models.Model):
+    ub_id = AutoField(primary_key=True)
+    u_id = ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.RESTRICT)
+    b_id = ForeignKey('agents.BehaviourRepositoryModel', on_delete=models.RESTRICT)
 
-
-class UserAndBehaviour(models.Model):
-    ua_id = AutoField(primary_key=True)
-    user_id = ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.RESTRICT)
-    b_id = ForeignKey('agents.BehavioursModel', on_delete=models.RESTRICT)
+    class Meta:
+        db_table = "owner_behaviour_repository"

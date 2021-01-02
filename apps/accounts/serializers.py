@@ -17,6 +17,13 @@ class UserRegisterSerializer(serializers.ModelSerializer):
         style={"input_type": "password"}, help_text="密码", label="密码", write_only=True,
     )
 
+    def __init__(self, *args, **kwargs):
+        super(UserRegisterSerializer, self).__init__(*args, **kwargs)
+        data = kwargs.get('data')
+        if data:
+            # c7d9d58be79211d43aec75bf26bf6860
+            kwargs['data']['certificate'] = hashlib.md5("{}".format(data['username']).encode("utf-8")).hexdigest()
+
     # 重写create方法加密密码，如果直接set的话会导致明文密码保存
     def create(self, validated_data):
         user = super(UserRegisterSerializer, self).create(validated_data=validated_data)
@@ -26,7 +33,7 @@ class UserRegisterSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ("username", "password", "role", "avatar")
+        fields = ("username", "password", "role", "avatar", "certificate")
 
 
 class UserDetailSerializer(serializers.ModelSerializer):
@@ -39,7 +46,7 @@ class UserDetailSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ("id", "username", "name", "role", "avatar", "password")
+        fields = ("id", "username", "role", "avatar", "password")
         extra_kwargs = {'password': {'write_only': True}, 'avatar_url': {'write_only': True}}
 
     def get_avatar(self, obj):

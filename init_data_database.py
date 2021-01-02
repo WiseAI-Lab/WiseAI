@@ -11,7 +11,6 @@ from agents.models import CategoryModel
 empty_configs_data = {
     "name": "empty",
     "extend": "{}",
-    "is_base": True
 }
 user_data = {
     'username': 'dongbox',
@@ -46,53 +45,53 @@ category_data = [
 ]
 # 1: base, 2: brain, 3: transport
 behaviour_data = [
+    # {
+    #     "name": "BaseBehaviour",
+    #     "parent_behaviour": 0,
+    #     "behaviour_category": 2,
+    #     "url": "",
+    #     "author": 1,
+    #     "description": "It's a base behaviour for all.",
+    #     "is_office": True,
+    #     "configuration": 1
+    # },
+    # {
+    #     "name": "BrainBehaviour",
+    #     "parent_behaviour": 1,
+    #     "behaviour_category": 3,
+    #     "author": 1,
+    #     "description": "It's a brain behaviour",
+    #     "is_office": True,
+    #     "configuration": 1
+    # }, {
+    #     "name": "TransportBehaviour",
+    #     "parent_behaviour": 1,
+    #     "behaviour_category": 4,
+    #     "url": "",
+    #     "author": 1,
+    #     "description": "It's a transport behaviour",
+    #     "is_office": True,
+    #     "configuration": 1
+    # },
     {
-        "name": "BaseBehaviour",
-        "parent_behaviour": 0,
-        "behaviour_category": 2,
-        "url": "",
-        "author": 1,
-        "description": "It's a base behaviour for all.",
-        "is_office": True,
-        "configs": 1
-    },
-    {
-        "name": "BrainBehaviour",
-        "parent_behaviour": 1,
-        "behaviour_category": 3,
-        "author": 1,
-        "description": "It's a brain behaviour",
-        "is_office": True,
-        "configs": 1
-    }, {
-        "name": "TransportBehaviour",
-        "parent_behaviour": 1,
+        "name": "MessageQueueTransportBehaviour",
+        "parent_behaviour": 3,
         "behaviour_category": 4,
         "url": "",
         "author": 1,
-        "description": "It's a transport behaviour",
+        "description": "It's a message queue transport behaviour",
         "is_office": True,
-        "configs": 1
+        "configuration": 1
+    }, {
+        "name": "ConfluentKafkaMessageQueueTransportBehaviour",
+        "parent_behaviour": 3,
+        "behaviour_category": 4,
+        "url": "",
+        "author": 1,
+        "description": "It's a confluent-kafka message queue transport behaviour",
+        "is_office": True,
+        "configuration": 1
     },
-    # {
-    #     "name": "MessageQueueTransportBehaviour",
-    #     "parent_behaviour": 3,
-    #     "behaviour_category": 4,
-    #     "url": "",
-    #     "author": 1,
-    #     "description": "It's a message queue transport behaviour",
-    #     "is_office": True,
-    #     "configs": 1
-    # }, {
-    #     "name": "ConfluentKafkaMessageQueueTransportBehaviour",
-    #     "parent_behaviour": 3,
-    #     "behaviour_category": 4,
-    #     "url": "",
-    #     "author": 1,
-    #     "description": "It's a confluent-kafka message queue transport behaviour",
-    #     "is_office": True,
-    #     "configs": 1
-    # },
 ]
 
 agent_data = [
@@ -107,7 +106,7 @@ agent_data = [
         "is_office": True,
         "in_docker": False,
         "author": 1,
-        "configs": 1
+        "configuration": 1
     }, {
         "name": "OfflineAgent",
         "prerequisite_behaviour_categories": [5],
@@ -119,7 +118,7 @@ agent_data = [
         "is_office": True,
         "in_docker": False,
         "author": 1,
-        "configs": 1
+        "configuration": 1
     },
     {
         "name": "OnlineAgent",
@@ -132,39 +131,48 @@ agent_data = [
         "is_office": True,
         "in_docker": False,
         "author": 1,
-        "configs": 1
+        "configuration": 1
     },
 
 ]
 
 initial_agent = [
     {
-        "name": "TestInitialAgent",
-        "behaviours": [2, 3],
+        "name": "TestOnlineAgent",
+        "behaviours": [2, 5],
         "basic_agent": 3,
         "agent_category": 1,
-        "description": "It's the online basic_agent.",
+        "description": "It's the online test.",
         "belong_to": 1,
-        "credit": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9",
-        "agent_configs": 1,
-        "behaviour_configs": 1,
+        "agent_configuration": 1,
+        "behaviour_configuration": 1,
+    },
+    {
+        "name": "TestOfflineAgent",
+        "behaviours": [2],
+        "basic_agent": 2,
+        "agent_category": 1,
+        "description": "It's the offline test.",
+        "belong_to": 1,
+        "agent_configuration": 1,
+        "behaviour_configuration": 1,
     },
 ]
 
 
 def generate_agent_config(data):
-    from agents.serilizers import AgentConfigsSerializer
+    from agents.serilizers import AgentConfigurationSerializer
 
-    agent_configs = AgentConfigsSerializer(data=data)
+    agent_configs = AgentConfigurationSerializer(data=data)
     if agent_configs.is_valid():
         agent_configs.save()
         print("save {} into Table: AgentConfigs".format(data))
 
 
 def generate_behaviour_config(data):
-    from agents.serilizers import BehaviourConfigsSerializer
+    from agents.serilizers import BehaviourConfigurationSerializer
 
-    agent_configs = BehaviourConfigsSerializer(data=data)
+    agent_configs = BehaviourConfigurationSerializer(data=data)
     if agent_configs.is_valid():
         agent_configs.save()
         print("save {} into Table: BehaviourConfigs".format(data))

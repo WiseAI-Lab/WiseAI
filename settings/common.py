@@ -46,6 +46,7 @@ OUR_APPS = [
 
 THIRD_PARTY_APPS = [
     "rest_framework",
+    "drf_yasg"
 ]
 
 INSTALLED_APPS = DEFAULT_APPS + OUR_APPS + THIRD_PARTY_APPS
@@ -77,6 +78,26 @@ TEMPLATES = [
         },
     }
 ]
+
+SWAGGER_SETTINGS = {
+    "DEFAULT_INFO": "wiseai.urls.swagger_api_info",
+    "SECURITY_DEFINITIONS": {
+        'Basic': {
+            'type': 'basic'
+        },
+        'Bearer': {
+            'type': 'apiKey',
+            'name': 'Authorization',
+            'in': 'header'
+        }
+    },
+    'JSON_EDITOR': True,
+    # 方法列表字母排序
+    'OPERATIONS_SORTER': 'alpha',
+    'VALIDATOR_URL': None,
+}
+
+REDOC_SETTINGS = {"SPEC_URL": ("docs.yaml", {"format": ".yaml"})}
 
 WSGI_APPLICATION = 'wiseai.wsgi.application'
 
