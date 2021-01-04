@@ -82,9 +82,6 @@ TEMPLATES = [
 SWAGGER_SETTINGS = {
     "DEFAULT_INFO": "wiseai.urls.swagger_api_info",
     "SECURITY_DEFINITIONS": {
-        'Basic': {
-            'type': 'basic'
-        },
         'Bearer': {
             'type': 'apiKey',
             'name': 'Authorization',

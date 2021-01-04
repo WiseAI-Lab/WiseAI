@@ -36,11 +36,11 @@ class ConfigurationModel(TimeStampedModel):
         db_table = "agent_configuration"
 
 
-# ---------------Behaviours------------------
+# ------------Abstract Model--------------
 
-class BehaviourTopicModel(TimeStampedModel):
+class TopicModel(TimeStampedModel):
     def __init__(self, *args, **kwargs):
-        super(BehaviourTopicModel, self).__init__(*args, **kwargs)
+        super(TopicModel, self).__init__(*args, **kwargs)
 
     # name
     name = models.CharField(max_length=100, db_index=True)
@@ -55,19 +55,13 @@ class BehaviourTopicModel(TimeStampedModel):
     url = models.URLField(max_length=200, blank=True, null=True)
 
     class Meta:
-        app_label = "agents"
-        db_table = "behaviour_topic"
+        abstract = True
 
 
-class BehaviourRepositoryModel(TimeStampedModel):
+class RepositoryModel(TimeStampedModel):
     def __init__(self, *args, **kwargs):
-        super(BehaviourRepositoryModel, self).__init__(*args, **kwargs)
+        super(RepositoryModel, self).__init__(*args, **kwargs)
 
-    topics = models.ManyToManyField(
-        BehaviourTopicModel,
-        through="BehaviourRepoTopicModel",
-        through_fields=("repo_id", "top_id")
-    )
     # tag name
     name = models.CharField(max_length=100, db_index=True)
     category = models.ForeignKey(
@@ -95,10 +89,35 @@ class BehaviourRepositoryModel(TimeStampedModel):
     num_stars = models.IntegerField(11, null=True)
     status = models.BooleanField(null=False)
 
-    is_template = models.IntegerField(11, null=True, db_index=True)
-    template_id = models.BooleanField(null=False)
+    is_template = models.BooleanField(null=False, default=False)
+    template_id = models.IntegerField(11, null=True, db_index=True, default=0)
 
-    avatar = models.ImageField(null=True)
+    avatar = models.URLField(null=True)
+
+    class Meta:
+        abstract = True
+
+
+# ---------------Behaviours------------------
+
+class BehaviourTopicModel(TopicModel):
+    def __init__(self, *args, **kwargs):
+        super(BehaviourTopicModel, self).__init__(*args, **kwargs)
+
+    class Meta:
+        app_label = "agents"
+        db_table = "behaviour_topic"
+
+
+class BehaviourRepositoryModel(RepositoryModel):
+    def __init__(self, *args, **kwargs):
+        super(BehaviourRepositoryModel, self).__init__(*args, **kwargs)
+
+    topics = models.ManyToManyField(
+        BehaviourTopicModel,
+        through="BehaviourRepoTopicModel",
+        through_fields=("repo_id", "top_id")
+    )
 
     class Meta:
         app_label = "agents"
@@ -106,30 +125,22 @@ class BehaviourRepositoryModel(TimeStampedModel):
 
 
 # -----------------Agents------------------------
-class AgentTopicModel(TimeStampedModel):
+class AgentTopicModel(TopicModel):
     def __init__(self, *args, **kwargs):
         super(AgentTopicModel, self).__init__(*args, **kwargs)
 
-    name = models.CharField(max_length=100, db_index=True)
     behaviours = models.ManyToManyField(
         BehaviourTopicModel,
         through="AgentBehaviourModel",
         through_fields=("a_id", "b_id")
     )
-    configuration = models.ForeignKey(
-        ConfigurationModel,
-        on_delete=models.CASCADE
-    )
-    description = models.TextField(null=True)
-    url = models.URLField(max_length=200, blank=True, null=True)
-    status = models.SmallIntegerField(default=1)
 
     class Meta:
         app_label = "agents"
         db_table = "agent_topic"
 
 
-class AgentRepositoryModel(TimeStampedModel):
+class AgentRepositoryModel(RepositoryModel):
     def __init__(self, *args, **kwargs):
         super(AgentRepositoryModel, self).__init__(*args, **kwargs)
 
@@ -138,37 +149,6 @@ class AgentRepositoryModel(TimeStampedModel):
         through="AgentRepoTopicModel",
         through_fields=("repo_id", "top_id")
     )
-    # tag name
-    name = models.CharField(max_length=100, db_index=True)
-
-    category = models.ForeignKey(
-        CategoryModel,
-        on_delete=models.RESTRICT,
-        db_index=True
-    )
-    description = models.TextField(null=True)
-    # user
-    owner = models.ForeignKey(
-        UserProfile,
-        on_delete=models.CASCADE
-    )
-    configuration_template = models.ForeignKey(ConfigurationModel, on_delete=models.CASCADE)
-
-    is_verify = models.BooleanField(null=True, db_index=True)
-    is_private = models.BooleanField(null=True, db_index=True)
-    is_archived = models.BooleanField(null=True, db_index=True)
-    is_mirror = models.BooleanField(null=True, db_index=True)
-    is_office = models.BooleanField(
-        default=False, verbose_name="office or user defined", db_index=True
-    )
-    num_watches = models.IntegerField(11, null=True)
-    num_stars = models.IntegerField(11, null=True)
-    status = models.SmallIntegerField(default=1)
-
-    is_template = models.IntegerField(11, null=True, db_index=True)
-    template_id = models.BooleanField(null=False)
-
-    avatar = models.ImageField(null=True)
 
     class Meta:
         app_label = "agents"

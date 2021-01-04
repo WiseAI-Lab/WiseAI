@@ -1,7 +1,7 @@
+from django.db.models.query import QuerySet
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import status, generics
-# from rest_framework.decorators import api_view, permission_classes
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
@@ -20,17 +20,13 @@ from agents.serilizers import (
     RepositorySerializer,
     AgentTopicSerializer,
     BehaviourRepositorySerializer,
-    BehaviourTopicSerializer
+    BehaviourTopicSerializer, BuildAgentByIdSerializer
 )
-from agents.utils import (
-    get_agent_repository_model,
-    get_agent_topic_model,
-    get_behaviour_repository_model,
-    get_behaviour_topic_model
-)
+
 from base.utils import paginated_queryset, PageNumberPaginatorInspectorClass
 
 
+# ---------------- Common---------------------
 class SearchList(generics.ListAPIView):
     permission_classes = [AllowAny]
 
@@ -39,17 +35,17 @@ class SearchList(generics.ListAPIView):
                          manual_parameters=[
                              openapi.Parameter(
                                  name="type",
-                                 in_=openapi.IN_PATH,
+                                 in_=openapi.IN_QUERY,
                                  type=openapi.TYPE_STRING,
                                  description="`Agent` or `Behaviour`.",
                                  required=True,
                              ),
                              openapi.Parameter(
                                  name="category",
-                                 in_=openapi.IN_PATH,
+                                 in_=openapi.IN_QUERY,
                                  type=openapi.TYPE_STRING,
                                  description="Default is `all`, filter the category with the type.",
-                                 required=True,
+                                 required=False,
                              ),
                          ],
                          responses={status.HTTP_200_OK: openapi.Response(
@@ -171,7 +167,7 @@ class SearchList(generics.ListAPIView):
             }
             return Response(response_data, status=status.HTTP_404_NOT_FOUND)
         # Get the data from database.
-        repository = cur_model.objects.filter(status=1)
+        repository = cur_model.objects.filter(status=1, is_private=False)
         if category and category != 'all':
             repository = repository \
                 .filter(category__in=category_check) \
@@ -199,10 +195,10 @@ class AgentRepositoryView(APIView):
     @swagger_auto_schema(security=list(),
                          paginator_inspectors=[PageNumberPaginatorInspectorClass],
                          responses={200: AgentRepositorySerializer(many=True)})
-    def get(self, request, agent_id: int) -> Response:
+    def get(self, request, repository_id: int) -> Response:
         try:
             agent_repository = AgentRepositoryModel.objects.get(
-                pk=agent_id
+                pk=repository_id
             )
         except AgentRepositoryModel.DoesNotExist:
             response_data = {
@@ -220,10 +216,10 @@ class AgentTopicView(APIView):
     @swagger_auto_schema(
         security=list(),
         responses={200: AgentTopicSerializer(many=True)})
-    def get(self, request, agent_id):
+    def get(self, request, repository_id):
         try:
             agent_repository = AgentRepositoryModel.objects.get(
-                pk=agent_id
+                pk=repository_id
             )
         except AgentRepositoryModel.DoesNotExist:
             response_data = {
@@ -231,7 +227,7 @@ class AgentTopicView(APIView):
             }
             return Response(response_data, status=status.HTTP_404_NOT_FOUND)
 
-        serializer = AgentTopicSerializer(data=agent_repository.topics, many=True)
+        serializer = AgentTopicSerializer(agent_repository.topics, many=True)
         response_data = serializer.data
         return Response(response_data, status=status.HTTP_200_OK)
 
@@ -247,17 +243,17 @@ class BehaviourRepositoryView(APIView):
     @swagger_auto_schema(security=list(),
                          paginator_inspectors=[PageNumberPaginatorInspectorClass],
                          responses={200: BehaviourRepositorySerializer(many=True)})
-    def get(self, request, agent_id: int) -> Response:
+    def get(self, request, repository_id: int) -> Response:
         try:
             behaviour_repository = BehaviourRepositoryModel.objects.get(
-                pk=agent_id
+                pk=repository_id
             )
         except BehaviourRepositoryModel.DoesNotExist:
             response_data = {
                 "error": "Repository doesn't exist."
             }
             return Response(response_data, status=status.HTTP_404_NOT_FOUND)
-        serializer = BehaviourTopicSerializer(behaviour_repository)
+        serializer = BehaviourRepositorySerializer(behaviour_repository)
         response_data = serializer.data
         return Response(response_data, status=status.HTTP_200_OK)
 
@@ -268,18 +264,18 @@ class BehaviourTopicView(APIView):
     @swagger_auto_schema(
         security=list(),
         responses={200: AgentTopicSerializer(many=True)})
-    def get(self, request, agent_id):
+    def get(self, request, repository_id):
         try:
             behaviour_repository = BehaviourRepositoryModel.objects.get(
-                pk=agent_id
+                pk=repository_id
             )
-        except AgentRepositoryModel.DoesNotExist:
+        except BehaviourRepositoryModel.DoesNotExist:
             response_data = {
                 "error": "Repository doesn't exist."
             }
             return Response(response_data, status=status.HTTP_404_NOT_FOUND)
 
-        serializer = BehaviourTopicSerializer(data=behaviour_repository.topics, many=True)
+        serializer = BehaviourTopicSerializer(behaviour_repository.topics, many=True)
         response_data = serializer.data
         return Response(response_data, status=status.HTTP_200_OK)
 
@@ -293,15 +289,22 @@ class CategoryView(APIView):
         responses={200: CategorySerializer(many=True)})
     def get(self, request):
         """
-        Return a list of all users.
+            Return category depend on request.
         """
         data = request.GET
-        if data.get("id") or data.get("name"):
-            category_data = CategoryModel.objects.order_by("id")
+        category_id = data.get("id")
+        category_name = data.get("name")
+        if category_id or category_name:
+            if category_id:
+                category_data = CategoryModel.objects.get(id=category_id)
+            else:
+                category_data = CategoryModel.objects.get(name=category_name)
             serializer = CategorySerializer(category_data)
             names = serializer.data
         else:
-            names = [cate.name for cate in CategoryModel.objects.all()]
+            category_data = CategoryModel.objects.all()
+            serializer = CategorySerializer(category_data, many=True)
+            names = serializer.data
 
         return Response(names, status=status.HTTP_200_OK)
 
@@ -316,30 +319,82 @@ class CategoryView(APIView):
             return Response(response_data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-# ---------------------------Initial Agent--------------------
-# class UserAgentListView(APIView):
-#     def get(self, request):
-#         agents = InitialAgentModel.objects.filter(belong_to=request.user)
-#         paginator, result_page = paginated_queryset(agents, request)
-#         serializer = InitialAgentListSerializer(
-#             result_page, many=True
-#         )
-#         response_data = serializer.data
-#         return paginator.get_paginated_response(response_data)
+
+# ---------------------------User Agent--------------------
+
+class UserAgentRepositoryListView(APIView):
+    def get(self, request):
+        try:
+            agents = AgentRepositoryModel.objects.filter(owner=request.user)
+            topic_list = QuerySet()
+            for a in agents:
+                topics = a.topics.all()
+                topic_list.union(topics)
+            paginator, result_page = paginated_queryset(agents, request)
+            serializer = AgentRepositorySerializer(
+                result_page, many=True
+            )
+            response_data = serializer.data
+            return paginator.get_paginated_response(response_data)
+        except AgentRepositoryModel.DoesNotExist:
+            error_data = {
+                'error': 'Not Found.'
+            }
+            return Response(error_data, status=status.HTTP_404_NOT_FOUND)
 
 
-# class BuildAgentView(APIView):
-#     def post(self, request, agent_id):
-#         data = get_user_agent_model(agent_id)
-#         serializer = BuildAgentByIdSerializer(data)
-#         response_data = serializer.data
-#         return Response(response_data, status=status.HTTP_200_OK)
+class UserAgentRepositoryInfoView(APIView):
+    def get(self, request, repository_id):
+        try:
+            agents = AgentRepositoryModel.objects.get(owner=request.user, id=repository_id)
+            serializer = AgentRepositorySerializer(
+                agents
+            )
+            response_data = serializer.data
+            return Response(response_data, status=status.HTTP_200_OK)
+        except AgentRepositoryModel.DoesNotExist:
+            error_data = {
+                'error': 'Not Found.'
+            }
+            return Response(error_data, status=status.HTTP_404_NOT_FOUND)
 
 
-# class UserAgentInfoView(APIView):
-#     def post(self, request, agent_id):
-#         agent = get_user_agent_model(agent_id)
-#
-#         serializer = InitialAgentInfoSerializer(agent)
-#         response_data = serializer.data
-#         return Response(response_data, status=status.HTTP_200_OK)
+class UserAgentTopicListView(APIView):
+    def get(self, request, repository_id):
+        repository = AgentRepositoryModel.objects.get(id=repository_id, owner=request.user)
+        topics = repository.topics.all()
+        paginator, result_page = paginated_queryset(topics, request)
+        serializer = AgentTopicSerializer(
+            result_page, many=True
+        )
+        response_data = serializer.data
+        return paginator.get_paginated_response(response_data)
+
+
+class UserAgentTopicInfoView(APIView):
+    def get(self, request, topic_id):
+        # TODO change here
+        try:
+            topic = AgentRepositoryModel.objects.filter(owner=request.user, topics_id=topic_id).first()
+            serializer = AgentTopicSerializer(topic)
+            response_data = serializer.data
+            return Response(response_data, status=status.HTTP_200_OK)
+        except AgentRepositoryModel.DoesNotExist:
+            response_data = {
+                "error": "Bad Found."
+            }
+            return Response(response_data, status=status.HTTP_404_NOT_FOUND)
+
+
+class BuildAgentView(APIView):
+    def post(self, request, topic_id):
+        repository = AgentRepositoryModel.objects.filter(topics__id=topic_id, owner=request.user)
+        if not repository:
+            error_data = {
+                'error': "Sorry, you are not authorized for this Agent."
+            }
+            return Response(error_data, status=status.HTTP_400_BAD_REQUEST)
+        topic = AgentTopicModel.objects.get(id=topic_id)
+        serializer = BuildAgentByIdSerializer(topic)
+        response_data = serializer.data
+        return Response(response_data, status=status.HTTP_200_OK)

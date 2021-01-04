@@ -1,8 +1,6 @@
-import hashlib
-import random
-
 from rest_framework import serializers
 
+from accounts.models import UserProfile
 from .models import (
     # AgentConfigurationModel,
     # BehaviourConfigurationModel,
@@ -13,15 +11,7 @@ from .models import (
     BehaviourRepositoryModel
 
 )
-
-
-def generate_avatar(obj):
-    styles = ['identicon', 'monsterid', 'wavatar']
-    size = 256
-    random_str = str(obj.name)
-    m1 = hashlib.md5("{}".format(random_str).encode("utf-8")).hexdigest()
-    url = 'http://www.gravatar.com/avatar/{}?s={}&d={}'.format(m1, size, random.choice(styles))
-    return url
+from .utils import generate_avatar
 
 
 class CategorySerializer(serializers.ModelSerializer):
@@ -29,17 +19,30 @@ class CategorySerializer(serializers.ModelSerializer):
         (1, 'agent'),
         (2, 'behaviour'),
     )
+    type = serializers.SerializerMethodField()
+    parent = serializers.SerializerMethodField()
 
     def __init__(self, *args, **kwargs):
         super(CategorySerializer, self).__init__(*args, **kwargs)
 
     class Meta:
         model = CategoryModel
-        fields = (
+        fields = [
             "name",
             "parent",
             "type",
-        )
+        ]
+
+    def get_parent(self, obj):
+        if obj.parent == 0:
+            return "None"
+
+    def get_type(self, obj):
+        for t in self.type_choice:
+            if t[0] == obj.type:
+                return t[1]
+            else:
+                return obj.type
 
 
 class RepositorySerializer(serializers.ModelSerializer):
@@ -55,15 +58,16 @@ class RepositorySerializer(serializers.ModelSerializer):
     def __init__(self, *args, **kwargs):
         super(RepositorySerializer, self).__init__(*args, **kwargs)
         self.repository = None
+        self.topic_serializer = None
 
     class Meta:
         model = None
         abstract = True
 
     def get_topics(self, obj):
-        topics = obj.topics
-        topics = topics.object.all()
-        return topics
+        topics = obj.topics.all()
+        serializer = self.topic_serializer(topics, many=True)
+        return serializer.data
 
     def get_owner(self, obj):
         owner = obj.owner
@@ -73,7 +77,7 @@ class RepositorySerializer(serializers.ModelSerializer):
         }
 
     def get_template_id(self, obj):
-        if obj.is_template:
+        if obj.is_template and obj.template_id != 0:
             ss = self.repository.objects.get(id=obj.template_id)
             return {
                 "id": ss.id,
@@ -119,10 +123,11 @@ class BehaviourRepositorySerializer(RepositorySerializer):
     def __init__(self, *args, **kwargs):
         super(BehaviourRepositorySerializer, self).__init__(*args, **kwargs)
         self.repository = BehaviourRepositoryModel
+        self.topic_serializer = BehaviourTopicSerializer
 
     class Meta:
         model = BehaviourRepositoryModel
-        fields = (
+        fields = [
             "topics",
             "name",
             "category",
@@ -140,7 +145,7 @@ class BehaviourRepositorySerializer(RepositorySerializer):
             "is_template",
             "template_id",
             "avatar",
-        )
+        ]
 
 
 class BehaviourTopicSerializer(TopicSerializer):
@@ -149,27 +154,22 @@ class BehaviourTopicSerializer(TopicSerializer):
 
     class Meta:
         model = BehaviourTopicModel
-        fields = (
+        fields = [
             "name",
             "configuration",
             "description",
             "status",
             "url",
-        )
+        ]
 
 
-# --------------------------BasicAgent list---------------------
-# agents list
-class AgentRepositorySerializer(RepositorySerializer):
-    template_id = serializers.SerializerMethodField()
-
+class CreateBehaviourRepositorySerializer(serializers.ModelSerializer):
     def __init__(self, *args, **kwargs):
-        super(AgentRepositorySerializer, self).__init__(*args, **kwargs)
-        self.repository = AgentRepositoryModel
+        super(CreateBehaviourRepositorySerializer, self).__init__(*args, **kwargs)
 
     class Meta:
-        model = AgentRepositoryModel
-        fields = (
+        model = BehaviourRepositoryModel
+        fields = [
             "topics",
             "name",
             "category",
@@ -187,7 +187,54 @@ class AgentRepositorySerializer(RepositorySerializer):
             "is_template",
             "template_id",
             "avatar",
-        )
+        ]
+
+
+class CreateBehaviourTopicSerializer(serializers.ModelSerializer):
+    def __init__(self, *args, **kwargs):
+        super(CreateBehaviourTopicSerializer, self).__init__(*args, **kwargs)
+
+    class Meta:
+        model = BehaviourTopicModel
+        fields = [
+            "name",
+            "configuration",
+            "description",
+            "url",
+            "status",
+        ]
+
+
+# --------------------------Agent list---------------------
+class AgentRepositorySerializer(RepositorySerializer):
+    template_id = serializers.SerializerMethodField()
+
+    def __init__(self, *args, **kwargs):
+        super(AgentRepositorySerializer, self).__init__(*args, **kwargs)
+        self.repository = AgentRepositoryModel
+        self.topic_serializer = AgentTopicSerializer
+
+    class Meta:
+        model = AgentRepositoryModel
+        fields = [
+            "topics",
+            "name",
+            "category",
+            "description",
+            "owner",
+            "configuration_template",
+            "is_verify",
+            "is_private",
+            "is_archived",
+            "is_mirror",
+            "is_office",
+            "num_watches",
+            "num_stars",
+            "status",
+            "is_template",
+            "template_id",
+            "avatar",
+        ]
 
 
 class AgentTopicSerializer(TopicSerializer):
@@ -198,28 +245,92 @@ class AgentTopicSerializer(TopicSerializer):
 
     class Meta:
         model = AgentTopicModel
-        fields = (
+        fields = [
             "name",
             "behaviours",
             "configuration",
             "description",
             "url",
             "status",
-        )
+        ]
 
     def get_behaviours(self, obj):
         behaviours = obj.behaviours.all()
-        return behaviours
+        serializer = BehaviourTopicSerializer(behaviours, many=True)
+        return serializer.data
 
 
-class CreateAgentRepositorySerializer(AgentRepositorySerializer):
+class CreateAgentRepositorySerializer(serializers.ModelSerializer):
     def __init__(self, *args, **kwargs):
         super(CreateAgentRepositorySerializer, self).__init__(*args, **kwargs)
 
     class Meta:
         model = AgentRepositoryModel
-        fields = "__all__"
+        fields = [
+            "topics",
+            "name",
+            "category",
+            "description",
+            "owner",
+            "configuration_template",
+            "is_verify",
+            "is_private",
+            "is_archived",
+            "is_mirror",
+            "is_office",
+            "num_watches",
+            "num_stars",
+            "status",
+            "is_template",
+            "template_id",
+            "avatar",
+        ]
 
+
+class CreateAgentTopicSerializer(serializers.ModelSerializer):
+    def __init__(self, *args, **kwargs):
+        super(CreateAgentTopicSerializer, self).__init__(*args, **kwargs)
+
+    class Meta:
+        model = AgentTopicModel
+        fields = [
+            "name",
+            "behaviours",
+            "configuration",
+            "description",
+            "url",
+            "status",
+        ]
+
+
+class BuildAgentByIdSerializer(TopicSerializer):
+    behaviours = serializers.SerializerMethodField()
+    repository = serializers.SerializerMethodField()
+
+    def __init__(self, *args, **kwargs):
+        super(BuildAgentByIdSerializer, self).__init__(*args, **kwargs)
+
+    class Meta:
+        model = AgentTopicModel
+        fields = [
+            "name",
+            "behaviours",
+            "configuration",
+            "description",
+            "url",
+            "status",
+            "repository"
+        ]
+
+    def get_behaviours(self, obj):
+        behaviours = obj.behaviours.all()
+        serializer = BehaviourTopicSerializer(behaviours, many=True)
+        return serializer.data
+
+    def get_repository(self, obj):
+        data = obj.agentrepositorymodel_set.first()
+        serializer = AgentRepositorySerializer(data)
+        return serializer.data
 # --------------------------BasicAgent info---------------------
 
 # class AgentInfoSerializer(serializers.ModelSerializer):

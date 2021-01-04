@@ -4,36 +4,56 @@ from agents import views
 urlpatterns = [
     # -----------------------Agent-------------------
     url(
-        r"search",
+        r"search/",
         views.SearchList.as_view(),
         name="search",
     ),
     url(
-        r"agent_repository/(?P<agent_id>[0-9]+)/",
-        views.AgentRepositoryView.as_view(),
-        name="get_agent_repository",
-    ),
-    url(
-        r"agent_repository/(?P<agent_id>[0-9]+)/topics",
+        r"agent_repository/(?P<repository_id>[0-9]+)/topics",
         views.AgentTopicView.as_view(),
         name="get_agent_topic",
     ),
+    url(
+        r"agent_repository/(?P<repository_id>[0-9]+)/",
+        views.AgentRepositoryView.as_view(),
+        name="get_agent_repository",
+    ),
     # -----------------------Behaviours------------------
     url(
-        r"behaviour_repository/(?P<agent_id>[0-9]+)/",
-        views.BehaviourRepositoryView.as_view(),
-        name="get_behaviour_repository",
-    ),
-    url(
-        r"behaviour_repository/(?P<agent_id>[0-9]+)/topics",
+        r"behaviour_repository/(?P<repository_id>[0-9]+)/topics",
         views.BehaviourTopicView.as_view(),
         name="get_behaviour_topic",
     ),
+    url(
+        r"behaviour_repository/(?P<repository_id>[0-9]+)/",
+        views.BehaviourRepositoryView.as_view(),
+        name="get_behaviour_repository",
+    ),
     # ------------------Category-----------------
     url(
-        r"categories",
+        r"category",
         views.CategoryView.as_view(),
         name="get_category",
     ),
-    # -----------------Build Agent--------------
+    # -----------------User Agent--------------
+    url(
+        r"user_repository/(?P<repository_id>[0-9]+)/topics",
+        views.UserAgentTopicListView.as_view(),
+        name="get_user_topic",
+    ),
+    url(
+        r"user_repository/(?P<repository_id>[0-9]+)/",
+        views.UserAgentRepositoryInfoView.as_view(),
+        name="get_user_repository",
+    ),
+    url(
+        r"user_repository/",
+        views.UserAgentRepositoryListView.as_view(),
+        name="get_user_repository",
+    ),
+    url(
+        r"build_agent/(?P<topic_id>[0-9]+)/",
+        views.BuildAgentView.as_view(),
+        name="build_agent",
+    ),
 ]

@@ -1,6 +1,8 @@
 import jwt
 from django.conf import settings
 from django.contrib.auth import logout, user_logged_in, get_user_model
+from drf_yasg import openapi
+from drf_yasg.utils import swagger_auto_schema
 
 from rest_framework.generics import RetrieveUpdateAPIView
 from rest_framework.permissions import AllowAny
@@ -66,6 +68,30 @@ class UserRetrieveUpdateAPIView(RetrieveUpdateAPIView):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
+@swagger_auto_schema(security=list(),
+                     methods=["post"],
+
+                     request_body=openapi.Schema(
+                         type=openapi.TYPE_OBJECT,
+                         required=['username', 'password'],
+                         properties={
+
+                             'username': openapi.Schema(
+                                 name="username",
+                                 in_=openapi.IN_BODY,
+                                 type=openapi.TYPE_STRING,
+                                 description="`Username",
+                             ),
+                             'password': openapi.Schema(
+                                 name="password",
+                                 in_=openapi.IN_BODY,
+                                 type=openapi.TYPE_STRING,
+                                 description="Password",
+                             ),
+                         },
+                     ),
+                     responses={status.HTTP_200_OK: openapi.Response("")},
+                     )
 @api_view(['POST'])
 @permission_classes([AllowAny, ])
 def authenticate_user(request):
