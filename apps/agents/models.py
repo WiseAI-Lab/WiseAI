@@ -1,16 +1,20 @@
-from django.contrib.postgres.fields import ArrayField
+from accounts.models import UserProfile
 from base.models import TimeStampedModel
 from django.db import models
 
 
+#  -----------Category And Configuration---------------
 class CategoryModel(TimeStampedModel):
+    AGENT = 1
+    BEHAVIOUR = 2
+    TYPE_OPTIONS = [(AGENT, 'agent'), (BEHAVIOUR, 'behaviour')]
 
     def __init__(self, *args, **kwargs):
         super(CategoryModel, self).__init__(*args, **kwargs)
 
-    name = models.CharField(max_length=100, db_index=True)
+    name = models.CharField(max_length=100)
     parent = models.IntegerField(default=0)
-    type = models.SmallIntegerField(null=False, default=1)  # 1 basic_agent, 2 behaviour
+    type = models.SmallIntegerField(null=False, default=1, choices=TYPE_OPTIONS)  # 1 basic_agent, 2 behaviour
 
     class Meta:
         app_label = "agents"
@@ -20,192 +24,175 @@ class CategoryModel(TimeStampedModel):
         return self.name
 
 
-class VersionModel(TimeStampedModel):
-    """
-        Description what the basic_agent version is.
-    """
-
+class ConfigurationModel(TimeStampedModel):
     def __init__(self, *args, **kwargs):
-        super(VersionModel, self).__init__(*args, **kwargs)
+        super(ConfigurationModel, self).__init__(*args, **kwargs)
 
-    name = models.CharField(max_length=100, db_index=True)
-    previous = models.IntegerField(null=True, blank=True, default=0)
-
-    class Meta:
-        app_label = "agents"
-        db_table = "version"
-
-    def __str__(self):
-        return self.name
-
-
-# Agent Config.
-class AgentConfigsModel(TimeStampedModel):
-    def __init__(self, *args, **kwargs):
-        super(AgentConfigsModel, self).__init__(*args, **kwargs)
-
-    # name
     name = models.CharField(max_length=100)
-    # extra property
-    extend = models.TextField(default="{}")
-    # if basic basic_agent or user's basic_agent
-    is_base = models.BooleanField(default=False, db_index=True)
+    content = models.TextField(default="{}")
+    required_content = models.TextField(default="{}")  # IF Exist that it's required.
 
     class Meta:
         app_label = "agents"
-        db_table = "agent_configs"
+        db_table = "agent_configuration"
 
 
-# Behaviour config
-class BehaviourConfigsModel(TimeStampedModel):
+# ------------Abstract Model--------------
+
+class TopicModel(TimeStampedModel):
+    ZIP_TYPE = 1
+    GIT_TYPE = 2
+    TYPE_STORE = [(ZIP_TYPE, 'zip'), (GIT_TYPE, 'git')]
+
+    ALIVE = 1
+    STOP = 2
+    DEAD = 3
+    TYPE_STATUS = [(ALIVE, 'alive'), (STOP, 'stop'), (DEAD, 'dead')]
+
     def __init__(self, *args, **kwargs):
-        super(BehaviourConfigsModel, self).__init__(*args, **kwargs)
+        super(TopicModel, self).__init__(*args, **kwargs)
 
     # name
     name = models.CharField(max_length=100, db_index=True)
-    # pool executors in progress or thread
-    is_progress_pool = models.BooleanField(default=False)
-    # default pool size.
-    default_pool_size = models.IntegerField(default=5)
-    # extra property
-    extend = models.TextField(default="{}")
-    #
-    is_base = models.BooleanField(default=False, db_index=True)
 
-    class Meta:
-        app_label = "agents"
-        db_table = "behaviour_configs"
-
-
-# Behaviours
-class BehavioursModel(TimeStampedModel):
-    def __init__(self, *args, **kwargs):
-        super(BehavioursModel, self).__init__(*args, **kwargs)
-
-    # name of behaviours
-    name = models.CharField(max_length=100, db_index=True)
-    # List[Category.id]
-    prerequisite_behaviour_categories = ArrayField(
-        models.IntegerField(), default=list, blank=True
-    )
-    # List[BasicAgents.id]
-    prerequisite_agents = ArrayField(
-        models.IntegerField(), default=list, blank=True
-    )
-    # Basic behaviour id.
-    parent_behaviour = models.IntegerField(null=True, blank=True, default=None)
-    behaviour_category = models.OneToOneField(CategoryModel, null=False, on_delete=models.RESTRICT)
-    url = models.URLField(max_length=100, blank=True, null=True)
-    author = models.ForeignKey(
-        "accounts.UserProfile",
-        related_name="user_behaviours",
-        on_delete=models.RESTRICT
-    )
-    description = models.TextField(null=True, blank=True)
-    is_office = models.BooleanField(
-        default=False, verbose_name="office or user defined", db_index=True
-    )
-    configs = models.ForeignKey(
-        "BehaviourConfigsModel",
-        related_name="config_behaviours",
-        on_delete=models.RESTRICT
-    )
-
-    class Meta:
-        app_label = "agents"
-        db_table = "behaviours"
-
-
-# Basic Agent
-class BasicAgentsModel(TimeStampedModel):
-    def __init__(self, *args, **kwargs):
-        super(BasicAgentsModel, self).__init__(*args, **kwargs)
-
-    # name
-    name = models.CharField(max_length=100)
-    # Prerequisite set of behaviour for this basic_agent.
-    prerequisite_behaviour_categories = ArrayField(
-        models.IntegerField(), default=list, blank=True
-    )
-    # Default behaviours for this basic_agent.
-    default_behaviours = ArrayField(
-        models.IntegerField(), default=list, blank=True
-    )
-    # Parent basic_agent id.
-    parent_agent = models.IntegerField(null=True, blank=True, default=None, db_index=True)
-    # basic_agent category
-    agent_category = models.ForeignKey(
-        "CategoryModel",
-        related_name="agent_basic_category",
-        on_delete=models.RESTRICT,
-        db_index=True
-    )
-    # url for current template.
-    url = models.URLField(max_length=100, blank=True, null=True)
-    # author name
-    author = models.ForeignKey(
-        "accounts.UserProfile",
-        related_name="user_basic_agent",
-        on_delete=models.RESTRICT,
-        db_index=True
-    )
-    description = models.TextField(null=True, blank=True)
-    is_office = models.BooleanField(
-        default=False, verbose_name="office or user defined", db_index=True
-    )
-    in_docker = models.BooleanField(
-        default=False, verbose_name="docker exist or not", db_index=True
-    )
-    # config for this.
-    configs = models.ForeignKey(
-        "AgentConfigsModel",
-        related_name="config_agents",
-        on_delete=models.RESTRICT
-    )
-    # current version
-    version = models.OneToOneField(VersionModel, null=True, on_delete=models.RESTRICT)
-    # extra support version is:
-    extra_support_version = ArrayField(
-        models.IntegerField(), default=list, blank=True
-    )
-
-    class Meta:
-        app_label = "agents"
-        db_table = "basic_agents"
-
-
-# Initial Agent
-class InitialAgentsModel(TimeStampedModel):
-    def __init__(self, *args, **kwargs):
-        super(InitialAgentsModel, self).__init__(*args, **kwargs)
-
-    # name
-    name = models.CharField(max_length=100, db_index=True)
-    # behaviours in initial behaviour of
-    behaviours = ArrayField(
-        models.IntegerField(), default=list, blank=True
-    )  # Current Behaviours' id
-    basic_agent = models.IntegerField(null=False)
-    # Category for initial basic_agent, and default is inherit from basic basic_agent.
-    agent_category = models.ForeignKey(
-        "CategoryModel",
-        related_name="agent_initial_category",
-        on_delete=models.RESTRICT,
-        db_index=True
-    )
-    # certificate
-    credit = models.CharField(max_length=100, db_index=True)
-    # user
-    belong_to = models.ForeignKey(
-        "accounts.UserProfile",
-        related_name="user_initial_agent",
+    configuration = models.ForeignKey(
+        ConfigurationModel,
         on_delete=models.CASCADE
     )
-    # configs for current basic_agent
-    agent_configs = models.OneToOneField(AgentConfigsModel, null=True, on_delete=models.RESTRICT)
-    # configs for current basic_agent's behaviours
-    behaviour_configs = models.OneToOneField(BehaviourConfigsModel, null=True, on_delete=models.RESTRICT)
+    description = models.TextField(null=True)
+    status = models.SmallIntegerField(default=1, choices=TYPE_STATUS)
+    # Current Behaviours' id
+    url = models.URLField(max_length=200, blank=True, null=True)
+    store_type = models.SmallIntegerField(default=2, choices=TYPE_STORE)
+
+    class Meta:
+        abstract = True
+
+
+class RepositoryModel(TimeStampedModel):
+    def __init__(self, *args, **kwargs):
+        super(RepositoryModel, self).__init__(*args, **kwargs)
+
+    # tag name
+    name = models.CharField(max_length=100, db_index=True)
+    category = models.ForeignKey(
+        CategoryModel,
+        on_delete=models.RESTRICT,
+        db_index=True
+    )
+    description = models.TextField(null=True)
+
+    # user
+    owner = models.ForeignKey(
+        UserProfile,
+        on_delete=models.CASCADE
+    )
+    configuration_template = models.ForeignKey(ConfigurationModel, on_delete=models.CASCADE)
+
+    is_verify = models.BooleanField(null=True, db_index=True)
+    is_private = models.BooleanField(null=True, db_index=True)
+    is_archived = models.BooleanField(null=True, db_index=True)
+    is_mirror = models.BooleanField(null=True, db_index=True)
+    is_office = models.BooleanField(
+        default=False, verbose_name="office or user defined", db_index=True
+    )
+    num_watches = models.IntegerField(11, null=True)
+    num_stars = models.IntegerField(11, null=True)
+    status = models.BooleanField(null=False)
+
+    is_template = models.BooleanField(null=False, default=False)
+    template_id = models.IntegerField(11, null=True, db_index=True, default=0)
+
+    avatar = models.URLField(null=True)
+
+    class Meta:
+        abstract = True
+
+
+# ---------------Behaviours------------------
+
+class BehaviourTopicModel(TopicModel):
+    def __init__(self, *args, **kwargs):
+        super(BehaviourTopicModel, self).__init__(*args, **kwargs)
 
     class Meta:
         app_label = "agents"
-        db_table = "initial_agents"
+        db_table = "behaviour_topic"
+
+
+class BehaviourRepositoryModel(RepositoryModel):
+    def __init__(self, *args, **kwargs):
+        super(BehaviourRepositoryModel, self).__init__(*args, **kwargs)
+
+    topics = models.ManyToManyField(
+        BehaviourTopicModel,
+        through="BehaviourRepoTopicModel",
+        through_fields=("repo_id", "top_id")
+    )
+
+    class Meta:
+        app_label = "agents"
+        db_table = "behaviour_repository"
+
+
+# -----------------Agents------------------------
+class AgentTopicModel(TopicModel):
+    def __init__(self, *args, **kwargs):
+        super(AgentTopicModel, self).__init__(*args, **kwargs)
+
+    behaviours = models.ManyToManyField(
+        BehaviourTopicModel,
+        through="AgentBehaviourModel",
+        through_fields=("a_id", "b_id")
+    )
+
+    class Meta:
+        app_label = "agents"
+        db_table = "agent_topic"
+
+
+class AgentRepositoryModel(RepositoryModel):
+    def __init__(self, *args, **kwargs):
+        super(AgentRepositoryModel, self).__init__(*args, **kwargs)
+
+    topics = models.ManyToManyField(
+        AgentTopicModel,
+        through="AgentRepoTopicModel",
+        through_fields=("repo_id", "top_id")
+    )
+
+    class Meta:
+        app_label = "agents"
+        db_table = "agent_repository"
+
+
+# --------------Many To Many------------------
+
+class BehaviourRepoTopicModel(models.Model):
+    id = models.AutoField(primary_key=True)
+    repo_id = models.ForeignKey('BehaviourRepositoryModel', on_delete=models.CASCADE)
+    top_id = models.ForeignKey('BehaviourTopicModel', on_delete=models.CASCADE)
+
+    class Meta:
+        app_label = "agents"
+        db_table = "behaviour_repo_topic"
+
+
+class AgentRepoTopicModel(models.Model):
+    id = models.AutoField(primary_key=True)
+    repo_id = models.ForeignKey('AgentRepositoryModel', on_delete=models.CASCADE)
+    top_id = models.ForeignKey('AgentTopicModel', on_delete=models.CASCADE)
+
+    class Meta:
+        app_label = "agents"
+        db_table = "agent_repo_topic"
+
+
+class AgentBehaviourModel(models.Model):
+    id = models.AutoField(primary_key=True)
+    a_id = models.ForeignKey('AgentTopicModel', on_delete=models.CASCADE)
+    b_id = models.ForeignKey('BehaviourTopicModel', on_delete=models.CASCADE)
+
+    class Meta:
+        app_label = "agents"
+        db_table = "agent_behaviour"

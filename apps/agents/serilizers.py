@@ -1,368 +1,472 @@
-import hashlib
-import random
-
 from rest_framework import serializers
+from rest_framework.authtoken.models import Token
 
-from accounts.serializers import UserDetailSerializer
+from accounts.models import UserProfile
 from .models import (
-    AgentConfigsModel,
-    BehaviourConfigsModel,
+    # AgentConfigurationModel,
+    # BehaviourConfigurationModel,
     CategoryModel,
-    InitialAgentsModel,
-    BasicAgentsModel,
-    BehavioursModel
+    AgentTopicModel,
+    AgentRepositoryModel,
+    BehaviourTopicModel,
+    BehaviourRepositoryModel
+
 )
-
-
-class AgentConfigsSerializer(serializers.ModelSerializer):
-    def __init__(self, *args, **kwargs):
-        super(AgentConfigsSerializer, self).__init__(*args, **kwargs)
-
-    class Meta:
-        model = AgentConfigsModel
-        fields = "__all__"
-
-
-class BehaviourConfigsSerializer(serializers.ModelSerializer):
-    def __init__(self, *args, **kwargs):
-        super(BehaviourConfigsSerializer, self).__init__(*args, **kwargs)
-
-    class Meta:
-        model = BehaviourConfigsModel
-        fields = "__all__"
+from .utils import generate_avatar
 
 
 class CategorySerializer(serializers.ModelSerializer):
     type_choice = (
-        (1, 'basic_agent'),
+        (1, 'agent'),
         (2, 'behaviour'),
     )
+    type = serializers.SerializerMethodField()
+    parent = serializers.SerializerMethodField()
 
     def __init__(self, *args, **kwargs):
         super(CategorySerializer, self).__init__(*args, **kwargs)
 
     class Meta:
         model = CategoryModel
-        fields = (
+        fields = [
             "name",
             "parent",
             "type",
-        )
+        ]
+
+    def get_parent(self, obj):
+        if obj.parent == 0:
+            return "None"
+
+    def get_type(self, obj):
+        for t in self.type_choice:
+            if t[0] == obj.type:
+                return t[1]
+            else:
+                return obj.type
+
+
+class RepositorySerializer(serializers.ModelSerializer):
+    is_active = serializers.ReadOnlyField()
+
+    topics = serializers.SerializerMethodField()
+    category = serializers.SerializerMethodField()
+    owner = serializers.SerializerMethodField()
+    template_id = serializers.SerializerMethodField()
+    configuration_template = serializers.SerializerMethodField()
+    avatar = serializers.SerializerMethodField()
+
+    def __init__(self, *args, **kwargs):
+        super(RepositorySerializer, self).__init__(*args, **kwargs)
+        self.repository = None
+        self.topic_serializer = None
+
+    class Meta:
+        model = None
+        abstract = True
+
+    def get_topics(self, obj):
+        topics = obj.topics.all()
+        serializer = self.topic_serializer(topics, many=True)
+        return serializer.data
+
+    def get_owner(self, obj):
+        owner = obj.owner
+        return {
+            "id": owner.id,
+            "name": str(owner)
+        }
+
+    def get_template_id(self, obj):
+        if obj.is_template and obj.template_id != 0:
+            ss = self.repository.objects.get(id=obj.template_id)
+            return {
+                "id": ss.id,
+                "name": ss.name
+            }
+        else:
+            return None
+
+    def get_configuration_template(self, obj):
+        return obj.configuration_template.content
+
+    def get_category(self, obj):
+        agent_category = obj.category
+        return {
+            "id": agent_category.id,
+            "name": agent_category.name
+        }
+
+    def get_avatar(self, obj):
+        return generate_avatar(obj)
+
+
+class TopicSerializer(serializers.ModelSerializer):
+    configuration = serializers.SerializerMethodField()
+    status = serializers.SerializerMethodField()
+
+    def __init__(self, *args, **kwargs):
+        super(TopicSerializer, self).__init__(*args, **kwargs)
+
+    def get_configuration(self, obj):
+        return obj.configuration.content
+
+    def get_status(sel, obj):
+        status = obj.status
+        return status
 
 
 # ---------------------Behaviour---------------------
-class BehaviourListSerializer(serializers.ModelSerializer):
-    avatar = serializers.SerializerMethodField()
+
+
+class BehaviourRepositorySerializer(RepositorySerializer):
 
     def __init__(self, *args, **kwargs):
-        super(BehaviourListSerializer, self).__init__(*args, **kwargs)
+        super(BehaviourRepositorySerializer, self).__init__(*args, **kwargs)
+        self.repository = BehaviourRepositoryModel
+        self.topic_serializer = BehaviourTopicSerializer
 
     class Meta:
-        model = BehavioursModel
-        fields = "__all__"
-
-    def get_avatar(self, obj):
-        styles = ['identicon', 'monsterid', 'wavatar']
-        size = 256
-        random_str = str(obj.name)
-        m1 = hashlib.md5("{}".format(random_str).encode("utf-8")).hexdigest()
-        url = 'http://www.gravatar.com/avatar/{}?s={}&d={}'.format(m1, size, random.choice(styles))
-        return url
-
-
-class CreateBehaviourSerializer(serializers.ModelSerializer):
-    def __init__(self, *args, **kwargs):
-        super(CreateBehaviourSerializer, self).__init__(*args, **kwargs)
-
-    class Meta:
-        model = BehavioursModel
-        fields = "__all__"
-
-
-class BehaviourInfoSerializer(serializers.ModelSerializer):
-
-    def __init__(self, *args, **kwargs):
-        super(BehaviourInfoSerializer, self).__init__(*args, **kwargs)
-
-    class Meta:
-        model = BehavioursModel
-        fields = "__all__"
-
-
-# --------------------------BasicAgent list---------------------
-# Basic agents list
-class BasicAgentsListSerializer(serializers.ModelSerializer):
-    is_active = serializers.ReadOnlyField()
-
-    avatar = serializers.SerializerMethodField()
-    author = serializers.SerializerMethodField()
-    agent_category = serializers.SerializerMethodField()
-    parent_agent = serializers.SerializerMethodField()
-
-    def __init__(self, *args, **kwargs):
-        super(BasicAgentsListSerializer, self).__init__(*args, **kwargs)
-
-    class Meta:
-        model = BasicAgentsModel
-        # fields = "__all__"
-        exclude = ["prerequisite_behaviour_categories", "default_behaviours", "configs", "url"]
-
-    def get_author(self, obj):
-        author = obj.author
-        return {
-            "id": author.id,
-            "name": str(author)
-        }
-
-    def get_agent_category(self, obj):
-        agent_category = obj.agent_category
-        return {
-            "id": agent_category.id,
-            "name": agent_category.name
-        }
-
-    def get_parent_agent(self, obj):
-        if obj.parent_agent == 0:
-            return None
-        ss = BasicAgentsModel.objects.get(id=obj.parent_agent)
-        return {
-            "id": obj.parent_agent,
-            "name": ss.name
-        }
-
-    def get_avatar(self, obj):
-        styles = ['identicon', 'monsterid', 'wavatar']
-        size = 256
-        random_str = str(obj.name)
-        m1 = hashlib.md5("{}".format(random_str).encode("utf-8")).hexdigest()
-        url = 'http://www.gravatar.com/avatar/{}?s={}&d={}'.format(m1, size, random.choice(styles))
-        return url
-
-
-class CreateBasicAgentSerializer(serializers.ModelSerializer):
-    def __init__(self, *args, **kwargs):
-        super(CreateBasicAgentSerializer, self).__init__(*args, **kwargs)
-
-    class Meta:
-        model = BasicAgentsModel
-        fields = "__all__"
-        # exclude = ["prerequisite_behaviour_categories", "default_behaviours", "configs", "url"]
-
-
-# --------------------------BasicAgent info---------------------
-
-class BasicAgentsInfoSerializer(serializers.ModelSerializer):
-    avatar = serializers.SerializerMethodField()
-
-    author = serializers.SerializerMethodField()
-    prerequisite_behaviour_categories = serializers.SerializerMethodField()
-    default_behaviours = serializers.SerializerMethodField()
-    agent_category = serializers.SerializerMethodField()
-    configs = serializers.SerializerMethodField()
-    parent_agent = serializers.SerializerMethodField()
-
-    def __init__(self, *args, **kwargs):
-        super(BasicAgentsInfoSerializer, self).__init__(*args, **kwargs)
-
-    class Meta:
-        model = BasicAgentsModel
-        fields = "__all__"
-
-    def get_author(self, obj):
-        author = obj.author
-        return {
-            "id": author.id,
-            "name": str(author)
-        }
-
-    def get_agent_category(self, obj):
-        agent_category = obj.agent_category
-        return {
-            "id": agent_category.id,
-            "name": agent_category.name
-        }
-
-    def get_prerequisite_behaviour_categories(self, obj):
-        ret = obj.prerequisite_behaviour_categories
-        temp = []
-        for i in ret:
-            category_name = CategoryModel.objects.get(id=i).name
-            temp.append({"id": i, "name": category_name})
-        return temp
-
-    def get_default_behaviours(self, obj):
-        ret = obj.default_behaviours
-        temp = []
-        for i in ret:
-            behaviour_name = BehavioursModel.objects.get(id=i).name
-            temp.append({"id": i, "name": behaviour_name})
-        return temp
-
-    def get_configs(self, obj):
-        ss = AgentConfigsSerializer(obj.configs)
-        return ss.data
-
-    def get_parent_agent(self, obj):
-        """
-            Agent Tree
-        :param obj:
-        :return:
-        """
-        tree_node = {
-            "name": obj.name,
-            "id": obj.id,
-            "children": self._fib_parent_tree(obj, [])
-        }
-        return tree_node
-
-    def _fib_parent_tree(self, node, dict_info):
-        parent_agent = node.parent_agent
-        if parent_agent == 0:
-            return dict_info
-        node = BasicAgentsModel.objects.get(id=parent_agent)
-        return [
-            {
-                "name": node.name,
-                "id": node.id,
-                "children": self._fib_parent_tree(node, dict_info)
-            }
+        model = BehaviourRepositoryModel
+        fields = [
+            "topics",
+            "name",
+            "category",
+            "description",
+            "owner",
+            "configuration_template",
+            "is_verify",
+            "is_private",
+            "is_archived",
+            "is_mirror",
+            "is_office",
+            "num_watches",
+            "num_stars",
+            "status",
+            "is_template",
+            "template_id",
+            "avatar",
         ]
 
-    def get_avatar(self, obj):
-        styles = ['identicon', 'monsterid', 'wavatar']
-        size = 256
-        random_str = str(obj.name)
-        m1 = hashlib.md5("{}".format(random_str).encode("utf-8")).hexdigest()
-        url = 'http://www.gravatar.com/avatar/{}?s={}&d={}'.format(m1, size, random.choice(styles))
-        return url
 
-
-# ---------------------------InitialAgent list-----------------
-
-class InitialAgentListSerializer(serializers.ModelSerializer):
-    avatar = serializers.SerializerMethodField()
-    agent_category = serializers.SerializerMethodField()
-    basic_agent = serializers.SerializerMethodField()
-
+class BehaviourTopicSerializer(TopicSerializer):
     def __init__(self, *args, **kwargs):
-        super(InitialAgentListSerializer, self).__init__(*args, **kwargs)
+        super(BehaviourTopicSerializer, self).__init__(*args, **kwargs)
 
     class Meta:
-        model = InitialAgentsModel
-        fields = "__all__"
-        # fields = (
-        #     "id",
-        #     "name",
-        #     "behaviours",
-        #     "basic_agent",
-        #     "agent_category",
-        #     "credit"
-        # )
-
-    def get_agent_category(self, obj):
-        agent_category = obj.agent_category
-        return {
-            "id": agent_category.id,
-            "name": agent_category.name
-        }
-
-    def get_basic_agent(self, obj):
-        if obj.basic_agent == 0:
-            return None
-        ss = BasicAgentsModel.objects.get(id=obj.basic_agent)
-        return {
-            "id": obj.basic_agent,
-            "name": ss.name
-        }
-
-    def get_avatar(self, obj):
-        styles = ['identicon', 'monsterid', 'wavatar']
-        size = 256
-        random_str = str(obj.name)
-        m1 = hashlib.md5("{}".format(random_str).encode("utf-8")).hexdigest()
-        url = 'http://www.gravatar.com/avatar/{}?s={}&d={}'.format(m1, size, random.choice(styles))
-        return url
+        model = BehaviourTopicModel
+        fields = [
+            "name",
+            "configuration",
+            "description",
+            "status",
+            "url",
+            "store_type"
+        ]
 
 
-class CreateInitialAgentSerializer(serializers.ModelSerializer):
+class CreateBehaviourRepositorySerializer(serializers.ModelSerializer):
     def __init__(self, *args, **kwargs):
-        super(CreateInitialAgentSerializer, self).__init__(*args, **kwargs)
+        super(CreateBehaviourRepositorySerializer, self).__init__(*args, **kwargs)
 
     class Meta:
-        model = InitialAgentsModel
-        fields = "__all__"
+        model = BehaviourRepositoryModel
+        fields = [
+            "topics",
+            "name",
+            "category",
+            "description",
+            "owner",
+            "configuration_template",
+            "is_verify",
+            "is_private",
+            "is_archived",
+            "is_mirror",
+            "is_office",
+            "num_watches",
+            "num_stars",
+            "status",
+            "is_template",
+            "template_id",
+            "avatar",
+        ]
 
 
-class InitialAgentInfoSerializer(serializers.ModelSerializer):
-    avatar = serializers.SerializerMethodField()
-    in_docker = serializers.SerializerMethodField()
-    belong_to = serializers.SerializerMethodField()
+class CreateBehaviourTopicSerializer(serializers.ModelSerializer):
+    def __init__(self, *args, **kwargs):
+        super(CreateBehaviourTopicSerializer, self).__init__(*args, **kwargs)
+
+    class Meta:
+        model = BehaviourTopicModel
+        fields = [
+            "name",
+            "configuration",
+            "description",
+            "url",
+            "status",
+        ]
+
+
+# --------------------------Agent list---------------------
+class AgentRepositorySerializer(RepositorySerializer):
+    template_id = serializers.SerializerMethodField()
+
+    def __init__(self, *args, **kwargs):
+        super(AgentRepositorySerializer, self).__init__(*args, **kwargs)
+        self.repository = AgentRepositoryModel
+        self.topic_serializer = AgentTopicSerializer
+
+    class Meta:
+        model = AgentRepositoryModel
+        fields = [
+            "topics",
+            "name",
+            "category",
+            "description",
+            "owner",
+            "configuration_template",
+            "is_verify",
+            "is_private",
+            "is_archived",
+            "is_mirror",
+            "is_office",
+            "num_watches",
+            "num_stars",
+            "status",
+            "is_template",
+            "template_id",
+            "avatar",
+        ]
+
+
+class AgentTopicSerializer(TopicSerializer):
     behaviours = serializers.SerializerMethodField()
-    agent_category = serializers.SerializerMethodField()
-    agent_configs = serializers.SerializerMethodField()
-    behaviour_configs = serializers.SerializerMethodField()
-    basic_agent = serializers.SerializerMethodField()
 
     def __init__(self, *args, **kwargs):
-        super(InitialAgentInfoSerializer, self).__init__(*args, **kwargs)
+        super(AgentTopicSerializer, self).__init__(*args, **kwargs)
 
     class Meta:
-        model = InitialAgentsModel
-        fields = "__all__"
-
-    def get_belong_to(self, obj):
-        user = obj.belong_to
-        return {
-            "id": user.id,
-            "name": str(user)
-        }
-
-    def get_agent_category(self, obj):
-        agent_category = obj.agent_category
-        return {
-            "id": agent_category.id,
-            "name": agent_category.name
-        }
+        model = AgentTopicModel
+        fields = [
+            "name",
+            "behaviours",
+            "configuration",
+            "description",
+            "url",
+            "status",
+        ]
 
     def get_behaviours(self, obj):
-        ret = obj.behaviours
-        temp = []
-        for i in ret:
-            behaviour_name = BehavioursModel.objects.get(id=i).name
-            temp.append({"id": i, "name": behaviour_name})
-        return temp
+        behaviours = obj.behaviours.all()
+        serializer = BehaviourTopicSerializer(behaviours, many=True)
+        return serializer.data
 
-    def get_agent_configs(self, obj):
-        ss = AgentConfigsSerializer(obj.agent_configs)
-        return ss.data
 
-    def get_behaviour_configs(self, obj):
-        ss = BehaviourConfigsSerializer(obj.behaviour_configs)
-        return ss.data
+class CreateAgentRepositorySerializer(serializers.ModelSerializer):
+    def __init__(self, *args, **kwargs):
+        super(CreateAgentRepositorySerializer, self).__init__(*args, **kwargs)
 
-    def get_basic_agent(self, obj):
-        """
-            Agent Tree
-        :param obj:
-        :return:
-        """
-        basic_agent = BasicAgentsModel.objects.get(id=obj.basic_agent)
-        tree_node = {
-            "name": basic_agent.name,
-            "id": basic_agent.id,
-        }
-        return tree_node
+    class Meta:
+        model = AgentRepositoryModel
+        fields = [
+            "topics",
+            "name",
+            "category",
+            "description",
+            "owner",
+            "configuration_template",
+            "is_verify",
+            "is_private",
+            "is_archived",
+            "is_mirror",
+            "is_office",
+            "num_watches",
+            "num_stars",
+            "status",
+            "is_template",
+            "template_id",
+            "avatar",
+        ]
 
-    def get_in_docker(self, obj):
-        basic_agent = BasicAgentsModel.objects.get(id=obj.basic_agent)
-        if basic_agent.in_docker:
-            return True
-        return False
 
-    def get_avatar(self, obj):
-        styles = ['identicon', 'monsterid', 'wavatar']
-        size = 256
-        random_str = str(obj.name)
-        m1 = hashlib.md5("{}".format(random_str).encode("utf-8")).hexdigest()
-        url = 'http://www.gravatar.com/avatar/{}?s={}&d={}'.format(m1, size, random.choice(styles))
-        return url
+class CreateAgentTopicSerializer(serializers.ModelSerializer):
+    def __init__(self, *args, **kwargs):
+        super(CreateAgentTopicSerializer, self).__init__(*args, **kwargs)
+
+    class Meta:
+        model = AgentTopicModel
+        fields = [
+            "name",
+            "behaviours",
+            "configuration",
+            "description",
+            "url",
+            "status",
+        ]
+
+
+# ---------------------Build Agent-----------------------------
+
+class AgentRepositoryListSerializer(serializers.ModelSerializer):
+    topics = serializers.SerializerMethodField()
+    ALIVE = 1
+    STOP = 2
+    DEAD = 3
+    TYPE_STATUS = [(ALIVE, 'alive'), (STOP, 'stop'), (DEAD, 'dead')]
+
+    def __init__(self, *args, **kwargs):
+        super(AgentRepositoryListSerializer, self).__init__(*args, **kwargs)
+
+    class Meta:
+        model = AgentRepositoryModel
+        fields = [
+            "topics",
+        ]
+
+    def get_topics(self, obj):
+        repo_name = obj.name
+        topics = obj.topics.all()
+        data = {}
+        for top in topics:
+            name = f"{repo_name}:{top.name}"
+            status = top.status
+            if status == self.ALIVE:
+                status = 'alive'
+            elif status == self.STOP:
+                status = 'stop'
+            else:
+                status = 'dead'
+            data[top.id] = {
+                'name': name,
+                'status': status
+            }
+        return data
+
+
+class BuildAgentBehavioursSerializer(TopicSerializer):
+    name = serializers.SerializerMethodField()
+    store_type = serializers.SerializerMethodField()
+    category = serializers.SerializerMethodField()
+
+    def __init__(self, *args, **kwargs):
+        super(BuildAgentBehavioursSerializer, self).__init__(*args, **kwargs)
+
+    class Meta:
+        model = BehaviourTopicModel
+        fields = [
+            "name",
+            "configuration",
+            "description",
+            "status",
+            "url",
+            "store_type",
+            "category"
+        ]
+
+    def get_name(self, obj):
+        b_repo = obj.behaviourrepositorymodel_set.first()
+        b_repo_name = b_repo.name
+        b_topic_name = obj.name
+        name = f"{b_repo_name}_{b_topic_name}"
+        return name
+
+    def get_category(self, obj):
+        b_repo = obj.behaviourrepositorymodel_set.first()
+        category = b_repo.category
+        category_root_name = category.name
+        while True:
+            if category.parent == 0:
+                break
+            cur_id = category.parent
+            category = CategoryModel.objects.get(id=cur_id)
+            prev_name = category.name
+            category_root_name = f"{prev_name}.{category_root_name}"
+        return category_root_name
+
+    def get_store_type(sel, obj):
+        store_type = obj.store_type
+        if store_type == 1:
+            return "zip"
+        else:
+            return "git"
+
+
+class BuildAgentRepositorySerializer(RepositorySerializer):
+    template_id = serializers.SerializerMethodField()
+
+    def __init__(self, *args, **kwargs):
+        super(BuildAgentRepositorySerializer, self).__init__(*args, **kwargs)
+        self.repository = AgentRepositoryModel
+        self.topic_serializer = AgentTopicSerializer
+
+    class Meta:
+        model = AgentRepositoryModel
+        fields = [
+            "topics",
+            "name",
+            "category",
+            "description",
+            "owner",
+            "configuration_template",
+            "is_verify",
+            "is_private",
+            "is_archived",
+            "is_mirror",
+            "is_office",
+            "num_watches",
+            "num_stars",
+            "status",
+            "is_template",
+            "template_id",
+            "avatar",
+        ]
+
+    def get_topics(self, obj):
+        return obj.topics.values('id', 'name')
+
+
+class BuildAgentByIdSerializer(TopicSerializer):
+    behaviours = serializers.SerializerMethodField()
+    repository = serializers.SerializerMethodField()
+    auth_token = serializers.SerializerMethodField()
+    status = serializers.SerializerMethodField()
+    store_type = serializers.SerializerMethodField()
+
+    def __init__(self, *args, **kwargs):
+        super(BuildAgentByIdSerializer, self).__init__(*args, **kwargs)
+
+    class Meta:
+        model = AgentTopicModel
+        fields = [
+            "name",
+            "behaviours",
+            "configuration",
+            "description",
+            "url",
+            "status",
+            "repository",
+            "store_type",
+            "auth_token"
+        ]
+
+    def get_auth_token(self, obj):
+        data = obj.agentrepositorymodel_set.first()
+        token = Token.objects.get(user=data.owner)
+        return token.key
+
+    def get_behaviours(self, obj):
+        behaviours = obj.behaviours.all()
+        serializer = BuildAgentBehavioursSerializer(behaviours, many=True)
+        return serializer.data
+
+    def get_repository(self, obj):
+        data = obj.agentrepositorymodel_set.first()
+        serializer = BuildAgentRepositorySerializer(data)
+        return serializer.data
+
+    def get_store_type(sel, obj):
+        store_type = obj.store_type
+        if store_type == 1:
+            return "zip"
+        else:
+            return "git"
