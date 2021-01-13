@@ -30,6 +30,7 @@ class ConfigurationModel(TimeStampedModel):
 
     name = models.CharField(max_length=100)
     content = models.TextField(default="{}")
+    required_content = models.TextField(default="{}")  # IF Exist that it's required.
 
     class Meta:
         app_label = "agents"
@@ -39,6 +40,15 @@ class ConfigurationModel(TimeStampedModel):
 # ------------Abstract Model--------------
 
 class TopicModel(TimeStampedModel):
+    ZIP_TYPE = 1
+    GIT_TYPE = 2
+    TYPE_STORE = [(ZIP_TYPE, 'zip'), (GIT_TYPE, 'git')]
+
+    ALIVE = 1
+    STOP = 2
+    DEAD = 3
+    TYPE_STATUS = [(ALIVE, 'alive'), (STOP, 'stop'), (DEAD, 'dead')]
+
     def __init__(self, *args, **kwargs):
         super(TopicModel, self).__init__(*args, **kwargs)
 
@@ -50,9 +60,10 @@ class TopicModel(TimeStampedModel):
         on_delete=models.CASCADE
     )
     description = models.TextField(null=True)
-    status = models.SmallIntegerField(default=1)
+    status = models.SmallIntegerField(default=1, choices=TYPE_STATUS)
     # Current Behaviours' id
     url = models.URLField(max_length=200, blank=True, null=True)
+    store_type = models.SmallIntegerField(default=2, choices=TYPE_STORE)
 
     class Meta:
         abstract = True

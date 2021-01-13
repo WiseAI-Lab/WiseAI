@@ -37,6 +37,11 @@ urlpatterns = [
     ),
     # -----------------User Agent--------------
     url(
+        r"user_agent_list",
+        views.UserAgentListView.as_view(),
+        name="get_user_agents",
+    ),
+    url(
         r"user_repository/(?P<repository_id>[0-9]+)/topics",
         views.UserAgentTopicListView.as_view(),
         name="get_user_topic",
@@ -49,7 +54,7 @@ urlpatterns = [
     url(
         r"user_repository/",
         views.UserAgentRepositoryListView.as_view(),
-        name="get_user_repository",
+        name="get_user_repositories",
     ),
     url(
         r"build_agent/(?P<topic_id>[0-9]+)/",

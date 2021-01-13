@@ -43,10 +43,16 @@ OUR_APPS = [
     "accounts",
     "agents",
 ]
-
+import dj_rest_auth.registration
 THIRD_PARTY_APPS = [
     "rest_framework",
-    "drf_yasg"
+    # auth
+    "dj_rest_auth",
+    "rest_framework.authtoken",
+    "rest_framework_expiring_authtoken",
+    # document
+    "drf_yasg",
+
 ]
 
 INSTALLED_APPS = DEFAULT_APPS + OUR_APPS + THIRD_PARTY_APPS
@@ -82,7 +88,7 @@ TEMPLATES = [
 SWAGGER_SETTINGS = {
     "DEFAULT_INFO": "wiseai.urls.swagger_api_info",
     "SECURITY_DEFINITIONS": {
-        'Bearer': {
+        'Token': {
             'type': 'apiKey',
             'name': 'Authorization',
             'in': 'header'
@@ -144,13 +150,11 @@ REST_FRAMEWORK = {
     "PAGE_SIZE": 100,
     "TEAM_PAGE_SIZE": 10,
     "DEFAULT_PERMISSION_CLASSES": [
-        "rest_framework.permissions.IsAuthenticated"
+        "rest_framework.permissions.IsAuthenticatedOrReadOnly"
     ],
-    'DEFAULT_AUTHENTICATION_CLASSES': (
-        'rest_framework_jwt.authentication.JSONWebTokenAuthentication',
-        'rest_framework.authentication.SessionAuthentication',
-        'rest_framework.authentication.BasicAuthentication',
-    ),
+    "DEFAULT_AUTHENTICATION_CLASSES": [
+        "rest_framework_expiring_authtoken.authentication.ExpiringTokenAuthentication"
+    ],
     "TEST_REQUEST_DEFAULT_FORMAT": "json",
     "DEFAULT_THROTTLE_CLASSES": (
         "rest_framework.throttling.AnonRateThrottle",
@@ -164,33 +168,10 @@ REST_FRAMEWORK = {
     "DEFAULT_RENDERER_CLASSES": ("rest_framework.renderers.JSONRenderer",),
 }
 
-JWT_AUTH = {
-    'JWT_ENCODE_HANDLER': 'rest_framework_jwt.utils.jwt_encode_handler',
+# REST Framework Expiring Tokens Configuration
+EXPIRING_TOKEN_LIFESPAN = datetime.timedelta(days=365)
 
-    'JWT_DECODE_HANDLER': 'rest_framework_jwt.utils.jwt_decode_handler',
-
-    'JWT_PAYLOAD_HANDLER': 'rest_framework_jwt.utils.jwt_payload_handler',
-
-    'JWT_PAYLOAD_GET_USER_ID_HANDLER': 'rest_framework_jwt.utils.jwt_get_user_id_from_payload_handler',
-
-    'JWT_RESPONSE_PAYLOAD_HANDLER': 'rest_framework_jwt.utils.jwt_response_payload_handler',
-
-    'JWT_SECRET_KEY': SECRET_KEY,
-    # 'JWT_GET_USER_SECRET_KEY': None,
-    # 'JWT_PUBLIC_KEY': None,
-    # 'JWT_PRIVATE_KEY': None,
-    'JWT_ALGORITHM': 'HS256',
-    'JWT_VERIFY': True,
-    'JWT_VERIFY_EXPIRATION': True,
-    # 'JWT_LEEWAY': 0,
-    'JWT_EXPIRATION_DELTA': datetime.timedelta(days=3),
-    # 'JWT_AUDIENCE': None,
-    # 'JWT_ISSUER': None,
-
-    # 'JWT_ALLOW_REFRESH': False,
-    'JWT_REFRESH_EXPIRATION_DELTA': datetime.timedelta(days=3),
-
-    'JWT_AUTH_HEADER_PREFIX': 'Bearer',
-    # 'JWT_AUTH_COOKIE': None,
-
+# To make usermame field read-only, customized serializer is defined.
+REST_AUTH_SERIALIZERS = {
+    "USER_DETAILS_SERIALIZER": "accounts.serializers.UserDetailSerializer",
 }

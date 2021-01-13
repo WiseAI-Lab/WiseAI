@@ -1,7 +1,6 @@
 """
     Generate some basic data and run "py manage.py createsuperuser" before.
 """
-import copy
 import os
 import django
 
@@ -24,14 +23,16 @@ user_data = {
 
 category_data = [
     {
-        "name": "online",
+        "name": "agent",
         "parent": 0,
         "type": 1
-    }, {
-        "name": "offline",
+    },
+    {
+        "name": "behaviour",
         "parent": 0,
-        "type": 1
-    }, {
+        "type": 2
+    },
+    {
         "name": "brain",
         "parent": 0,
         "type": 2
@@ -41,6 +42,28 @@ category_data = [
         "type": 2
     },
 ]
+
+category_data_new = {
+    "name": "visbb",
+    "parent": 1,
+    "type": 2
+}
+visbb_repository_behaviour = {
+    "name": "FlaskVisualizationBrainBehaviour",
+    "owner": 1,
+    "description": "It's a Flask Visualization brain behaviour",
+    "configuration_template": 1,
+    "is_verify": True,
+    "is_private": False,
+    "is_mirror": False,
+    "is_office": True,
+    "num_watches": 0,
+    "num_stars": 0,
+    "status": 1,
+    "category": 5,
+    "is_template": True,
+    "template_id": 1
+}
 # 1: base, 2: brain, 3: transport
 behaviour_repository_data = [
     {
@@ -110,11 +133,12 @@ behaviour_repository_data = [
 ]
 
 behaviour_topic_data = {
-    "name": "0.1",
+    "name": "v1",
     "configuration": 1,
     "description": "Version of Behaviour",
     "url": "https://wise.agent",  # Download path
     "status": 1,
+    "store_type": 2,
 }
 
 agent_repository_data = [
@@ -144,6 +168,7 @@ agent_topics_data = [
         "description": "Version of Basic Agent",
         "url": "https://wise.agent",  # Download url
         "status": 1,
+        "store_type": 2,
     }
 ]
 
@@ -157,12 +182,12 @@ def generate_category(data):
         print("save {} into Table: Category".format(data))
 
 
-def generate_config():
+def generate_config(data):
     from agents.models import ConfigurationModel
 
-    data = ConfigurationModel(**config)
-    data.save()
-    print("save {} into Table: Configuration".format(data))
+    config = ConfigurationModel(**data)
+    config.save()
+    print("save {} into Table: Configuration".format(config))
 
 
 def generate_behaviour(data):
@@ -213,14 +238,27 @@ def create_user(data):
 
 
 def main():
-    create_user(user_data)
-    generate_config()
-    for d in category_data:
-        generate_category(d)
-    for d in behaviour_repository_data:
-        generate_behaviour(d)
-    for d in agent_repository_data:
-        generate_agent(d)
+    # create_user(user_data)
+    # generate_config()
+    # for d in category_data:
+    #     generate_category(d)
+    # for d in behaviour_repository_data:
+    #     generate_behaviour(d)
+    # for d in agent_repository_data:
+    #     generate_agent(d)
+    import json
+    path = "example_launch_config.json"
+    with open(path, 'r') as f:
+        content = json.load(f)
+    behaviours = content.get("configuration").get("behaviours")
+    config_data = {
+        "name": "Test",
+        "content": behaviours,
+        # "required_content": behaviours
+    }
+    generate_config(config_data)
+    # generate_category(category_data_new)
+    # generate_behaviour(visbb_repository_behaviour)
 
 
 if __name__ == '__main__':

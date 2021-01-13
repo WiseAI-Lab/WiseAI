@@ -50,9 +50,6 @@ class UserProfile(AbstractUser, TimeStampedModel):
                                     through_fields=("u_id", "a_id"))
     behaviours = models.ManyToManyField(to="agents.BehaviourRepositoryModel", through="BehaviourRepoModel",
                                         through_fields=("u_id", "b_id"))
-    # certificate
-    certificate = models.CharField(max_length=100, default='certificate')
-
     USERNAME_FIELD = 'username'
 
     class Meta:

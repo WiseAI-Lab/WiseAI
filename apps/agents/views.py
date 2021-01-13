@@ -1,7 +1,8 @@
+from django.contrib.auth import get_user_model
 from django.db.models.query import QuerySet
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
-from rest_framework import status, generics
+from rest_framework import status, generics, permissions
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
@@ -20,10 +21,12 @@ from agents.serilizers import (
     RepositorySerializer,
     AgentTopicSerializer,
     BehaviourRepositorySerializer,
-    BehaviourTopicSerializer, BuildAgentByIdSerializer
+    BehaviourTopicSerializer, BuildAgentByIdSerializer, AgentRepositoryListSerializer
 )
 
 from base.utils import paginated_queryset, PageNumberPaginatorInspectorClass
+
+User = get_user_model()
 
 
 # ---------------- Common---------------------
@@ -323,6 +326,8 @@ class CategoryView(APIView):
 # ---------------------------User Agent--------------------
 
 class UserAgentRepositoryListView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
     def get(self, request):
         try:
             agents = AgentRepositoryModel.objects.filter(owner=request.user)
@@ -344,6 +349,8 @@ class UserAgentRepositoryListView(APIView):
 
 
 class UserAgentRepositoryInfoView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
     def get(self, request, repository_id):
         try:
             agents = AgentRepositoryModel.objects.get(owner=request.user, id=repository_id)
@@ -360,6 +367,8 @@ class UserAgentRepositoryInfoView(APIView):
 
 
 class UserAgentTopicListView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
     def get(self, request, repository_id):
         repository = AgentRepositoryModel.objects.get(id=repository_id, owner=request.user)
         topics = repository.topics.all()
@@ -372,6 +381,8 @@ class UserAgentTopicListView(APIView):
 
 
 class UserAgentTopicInfoView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
     def get(self, request, topic_id):
         # TODO change here
         try:
@@ -386,8 +397,22 @@ class UserAgentTopicInfoView(APIView):
             return Response(response_data, status=status.HTTP_404_NOT_FOUND)
 
 
+class UserAgentListView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        repositories = AgentRepositoryModel.objects.filter(owner=request.user).all()
+        serializer = AgentRepositoryListSerializer(
+            repositories, many=True
+        )
+        response_data = serializer.data
+        return Response(response_data, status=status.HTTP_200_OK)
+
+
 class BuildAgentView(APIView):
-    def post(self, request, topic_id):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request, topic_id):
         repository = AgentRepositoryModel.objects.filter(topics__id=topic_id, owner=request.user)
         if not repository:
             error_data = {

@@ -18,8 +18,7 @@ from django.contrib import admin
 from django.urls import path, include
 from drf_yasg import openapi
 from drf_yasg.views import get_schema_view
-from rest_framework import routers, permissions
-
+from rest_framework import permissions
 
 swagger_api_info = openapi.Info(
     title="WiseAI API",
@@ -36,7 +35,8 @@ schema_view = get_schema_view(
 urlpatterns = [
     path('admin/', admin.site.urls),
     url(r'^api/agent/', include('agents.urls')),
-    url(r'^api/user/', include('accounts.urls')),
+    url(r"^api/auth/", include("dj_rest_auth.urls")),
+    url(r"^api/auth/", include("accounts.urls")),
     url(
         r"^api/docs/docs(?P<format>\.json|\.yaml)$",
         schema_view.without_ui(cache_timeout=0),
