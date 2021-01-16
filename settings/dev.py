@@ -8,7 +8,7 @@ AUTH_USER_MODEL = "accounts.UserProfile"
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql_psycopg2",
-        "NAME": os.environ.get("POSTGRES_NAME", "wise_agent"),  # noqa: ignore=F405
+        "NAME": os.environ.get("POSTGRES_NAME", "postgres"),  # noqa: ignore=F405
         "USER": os.environ.get(  # noqa: ignore=F405
             "POSTGRES_USER", "postgres"
         ),  # noqa: ignore=F405

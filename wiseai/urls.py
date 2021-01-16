@@ -33,7 +33,9 @@ schema_view = get_schema_view(
 )
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
+    url(r'^jet/', include('jet.urls', 'jet')),  # Django JET URLS
+    path('jet/dashboard/', include('jet.dashboard.urls', 'jet-dashboard')),  # Django JET dashboard URLS
+    path('accounts/login/', admin.site.urls),
     url(r'^api/agent/', include('agents.urls')),
     url(r"^api/auth/", include("dj_rest_auth.urls")),
     url(r"^api/auth/", include("accounts.urls")),
@@ -48,5 +50,5 @@ urlpatterns = [
         r"^api/docs/$",
         schema_view.with_ui("redoc", cache_timeout=0),
         name="schema-redoc",
-    )
+    ),
 ]

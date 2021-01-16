@@ -31,6 +31,8 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 sys.path.append(APPS_DIR)
 # Application definition
 DEFAULT_APPS = [
+    'jet',  # new admin
+    'jet.dashboard',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -44,6 +46,7 @@ OUR_APPS = [
     "agents",
 ]
 import dj_rest_auth.registration
+
 THIRD_PARTY_APPS = [
     "rest_framework",
     # auth
@@ -52,6 +55,7 @@ THIRD_PARTY_APPS = [
     "rest_framework_expiring_authtoken",
     # document
     "drf_yasg",
+    'django_json_widget',
 
 ]
 

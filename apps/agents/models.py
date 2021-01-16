@@ -1,3 +1,8 @@
+import json
+
+from django.contrib import admin
+
+
 from accounts.models import UserProfile
 from base.models import TimeStampedModel
 from django.db import models
@@ -24,17 +29,22 @@ class CategoryModel(TimeStampedModel):
         return self.name
 
 
+admin.site.register(CategoryModel)
+
+
 class ConfigurationModel(TimeStampedModel):
     def __init__(self, *args, **kwargs):
         super(ConfigurationModel, self).__init__(*args, **kwargs)
 
     name = models.CharField(max_length=100)
-    content = models.TextField(default="{}")
-    required_content = models.TextField(default="{}")  # IF Exist that it's required.
+    content = models.JSONField(default="{}")
+    required_content = models.JSONField(default="{}")  # IF Exist that it's required.
 
     class Meta:
         app_label = "agents"
         db_table = "agent_configuration"
+
+
 
 
 # ------------Abstract Model--------------
@@ -120,6 +130,9 @@ class BehaviourTopicModel(TopicModel):
         db_table = "behaviour_topic"
 
 
+admin.site.register(BehaviourTopicModel)
+
+
 class BehaviourRepositoryModel(RepositoryModel):
     def __init__(self, *args, **kwargs):
         super(BehaviourRepositoryModel, self).__init__(*args, **kwargs)
@@ -133,6 +146,9 @@ class BehaviourRepositoryModel(RepositoryModel):
     class Meta:
         app_label = "agents"
         db_table = "behaviour_repository"
+
+
+admin.site.register(BehaviourRepositoryModel)
 
 
 # -----------------Agents------------------------
@@ -151,6 +167,9 @@ class AgentTopicModel(TopicModel):
         db_table = "agent_topic"
 
 
+admin.site.register(AgentTopicModel)
+
+
 class AgentRepositoryModel(RepositoryModel):
     def __init__(self, *args, **kwargs):
         super(AgentRepositoryModel, self).__init__(*args, **kwargs)
@@ -164,6 +183,11 @@ class AgentRepositoryModel(RepositoryModel):
     class Meta:
         app_label = "agents"
         db_table = "agent_repository"
+
+
+@admin.register(AgentRepositoryModel)
+class AgentRepositoryAdmin(admin.ModelAdmin):
+    list_filter = ('is_verify', 'is_private', 'is_archived', 'is_mirror', 'is_office', 'status', 'is_template')
 
 
 # --------------Many To Many------------------

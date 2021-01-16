@@ -7,15 +7,6 @@ import django
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "settings.dev")
 django.setup()
 
-config = {
-    "name": "Empty",
-    "content": {
-        "version": "v1",
-        "feature": ["Test"],
-        "pool_size": 0,
-        "is_process": True
-    }
-}
 user_data = {
     'username': 'dongbox',
     'password': 'dongbox'
@@ -52,7 +43,7 @@ visbb_repository_behaviour = {
     "name": "FlaskVisualizationBrainBehaviour",
     "owner": 1,
     "description": "It's a Flask Visualization brain behaviour",
-    "configuration_template": 1,
+    "configuration_template": 2,
     "is_verify": True,
     "is_private": False,
     "is_mirror": False,
@@ -70,7 +61,7 @@ behaviour_repository_data = [
         "name": "BrainBehaviour",
         "owner": 1,
         "description": "It's a Basic brain behaviour",
-        "configuration_template": 1,
+        "configuration_template": 2,
         "is_verify": True,
         "is_private": False,
         "is_mirror": False,
@@ -87,7 +78,7 @@ behaviour_repository_data = [
         "category": 4,
         "owner": 1,
         "description": "It's a Basic Transport behaviour",
-        "configuration_template": 1,
+        "configuration_template": 2,
         "is_verify": True,
         "is_private": False,
         "is_mirror": False,
@@ -103,7 +94,7 @@ behaviour_repository_data = [
         "category": 4,
         "owner": 1,
         "description": "It's a message queue transport behaviour",
-        "configuration_template": 1,
+        "configuration_template": 2,
         "is_verify": True,
         "is_private": False,
         "is_mirror": False,
@@ -119,7 +110,7 @@ behaviour_repository_data = [
         "category": 4,
         "owner": 1,
         "description": "It's a confluent-kafka message queue transport behaviour",
-        "configuration_template": 1,
+        "configuration_template": 2,
         "is_verify": True,
         "is_private": False,
         "is_mirror": False,
@@ -228,8 +219,8 @@ def generate_agent(data):
 
 
 def create_user(data):
-    from accounts.serializers import UserRegisterSerializer
-    user = UserRegisterSerializer(data=data)
+    from accounts.serializers import ProfileSerializer
+    user = ProfileSerializer(data=data)
     if user.is_valid():
         user.save()
         print("save {} into Table: UserRegister".format(data))
@@ -238,27 +229,35 @@ def create_user(data):
 
 
 def main():
-    # create_user(user_data)
-    # generate_config()
-    # for d in category_data:
-    #     generate_category(d)
-    # for d in behaviour_repository_data:
-    #     generate_behaviour(d)
-    # for d in agent_repository_data:
-    #     generate_agent(d)
+    create_user(user_data)
+    for d in category_data:
+        generate_category(d)
+    # configuration
     import json
     path = "example_launch_config.json"
     with open(path, 'r') as f:
         content = json.load(f)
-    behaviours = content.get("configuration").get("behaviours")
+    configuration = content.get("configuration")
     config_data = {
-        "name": "Test",
+        "name": "agent-configuration-template",
+        "content": configuration,
+        # "required_content": behaviours
+    }
+    generate_config(config_data)
+    behaviours = content.get("behaviours").get("FlaskVisualizationBrainBehaviour").get("configuration")
+    config_data = {
+        "name": "behaviour-configuration-template",
         "content": behaviours,
         # "required_content": behaviours
     }
     generate_config(config_data)
-    # generate_category(category_data_new)
-    # generate_behaviour(visbb_repository_behaviour)
+    for d in behaviour_repository_data:
+        generate_behaviour(d)
+    for d in agent_repository_data:
+        generate_agent(d)
+
+    generate_category(category_data_new)
+    generate_behaviour(visbb_repository_behaviour)
 
 
 if __name__ == '__main__':

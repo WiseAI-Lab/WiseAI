@@ -1,4 +1,5 @@
 from __future__ import unicode_literals
+from django.contrib import admin
 
 from django.conf import settings
 from django.contrib.auth.base_user import BaseUserManager
@@ -61,6 +62,9 @@ class UserProfile(AbstractUser, TimeStampedModel):
 
     def check_password(self, raw_password):
         return True if check_password(raw_password, self.password) else False
+
+
+admin.site.register(UserProfile)
 
 
 class AgentRepoModel(models.Model):
